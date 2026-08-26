@@ -1,159 +1,248 @@
-# Prompt de Implementação — CRUD de Usuários, Roles e Permissions (TALL Stack, autorização 100% nativa)
+# PRD & Especificação Técnica — RBAC Nativo (TALL Stack)
 
-## Contexto e objetivo
+## 1. Contexto e Objetivo
 
-Implementar, em um boilerplate TALL Stack (Laravel 13 + Livewire 4 + Flux UI + Alpine.js + Tailwind), um sistema de **RBAC (Role-Based Access Control)** completo com CRUD de:
+Implementar, no boilerplate TALL Stack (Laravel 13 + Livewire 4 + Flux UI + Alpine.js + Tailwind CSS v4), um sistema completo de **RBAC (Role-Based Access Control)** com gerenciamento de:
 
-1. **Usuários** (Users)
-2. **Roles**
-3. **Permissions**
+1. **Usuários (Users)**
+2. **Papéis (Roles)**
+3. **Permissões (Permissions)**
 
-A autorização deve usar **exclusivamente recursos nativos do Laravel** — `Gate`, `Policy`, `Authorizable`, `Gate::before`, `can()`/`@can` — **sem nenhum pacote de terceiros** (nada de `spatie/laravel-permission` ou similar). O objetivo é ter controle total do modelo de dados e da lógica de autorização, sem a camada de abstração de um pacote externo.
+A autorização é **100% nativa do Laravel** (`Gate`, `Policy`, `Authorizable`, `Gate::before`, `can()`/`@can`), sem qualquer dependência de pacotes externos (como `spatie/laravel-permission` ou `bouncer`).
 
-## Escopo
+### Diretriz Arquitetural (Síntese Opções A + B)
+- **Estrutura Orientada a Domínio:** Código centralizado em `app/Domain/Auth/`.
+- **Camada de Aplicação Limpa:** Livewire 4 utilizando **Form Objects** (`Livewire\Form`) para validação reativa e manipulação do estado da UI.
+- **Camada de Domínio Desacoplada:** Form Objects convertem dados para **DTOs** (`final readonly`), que são processados por **Actions** (`final readonly`) invocáveis.
+- **Banco de Dados:** Padronização completa com **UUID** como chave primária, **Soft Deletes** em todas as entidades e `declare(strict_types=1)` em todos os arquivos PHP.
 
-- CRUD completo (listar, criar, editar, excluir com soft delete, restaurar) para Users, Roles e Permissions.
-- Atribuição de múltiplas roles a um usuário (many-to-many).
-- Atribuição de múltiplas permissions a uma role (many-to-many).
-- Registro dinâmico de Gates a partir das permissions cadastradas no banco (não hardcoded no `AuthServiceProvider`).
-- Um usuário "super-admin" com bypass total via `Gate::before`.
-- Policies para os três models (`UserPolicy`, `RolePolicy`, `PermissionPolicy`), delegando a checagem de permissão granular para o Gate dinâmico.
-- Seeder com roles/permissions padrão para bootstrapping do projeto.
-- Componentes Livewire (full-page, não Volt) usando Flux UI para listagem (com busca/paginação), formulário de criação/edição e confirmação de exclusão.
-- Testes Pest cobrindo Policies, Gates e os componentes Livewire (caminho feliz e negativo).
+---
 
-## Fora de escopo
+## 2. Escopo do Módulo
 
-- Qualquer pacote de terceiros para autorização (spatie/permission, bouncer, etc).
-- Multi-tenancy — este boilerplate é single-tenant; se o projeto de destino for multi-tenant, tratar como ajuste posterior fora deste prompt.
-- Autenticação (login/registro/2FA) — assume-se que já existe (Fortify/Breeze/Jetstream ou custom).
-- Painel Filament — este prompt cobre componentes Livewire puros. Se o projeto usar Filament, adaptar a UI para Resources do Filament reaproveitando a mesma modelagem de dados, Policies e Gates.
+- **CRUD de Usuários:** Listagem com busca e paginação, criação, edição, atribuição de múltiplas roles, exclusão suave (soft delete) e restauração.
+- **CRUD de Roles:** Listagem, criação, edição, vinculação de múltiplas permissions (many-to-many), soft delete e restauração.
+- **CRUD de Permissions:** Listagem, criação, edição com validação de formato de slug (ex: `users.view`, `roles.create`), soft delete e restauração.
+- **Autorização Granular Nativa:**
+  - `Gate::before` para bypass de usuários super-administradores (`is_super_admin = true`).
+  - Registro dinâmico de Gates com cache resiliente a migrações e bootstrap.
+  - Invalidação atômica de cache ao persistir ou remover permissions.
+  - Policies específicas para cada model (`UserPolicy`, `RolePolicy`, `PermissionPolicy`).
+  - Dupla checagem no Livewire (no ciclo `mount()` e em cada método de ação de escrita).
+- **Interface com Flux UI:**
+  - Tabelas de listagem com busca reativa, badges de status/roles e paginação nativa Flux.
+  - Formulários com validação imediata e feedback visual de erros.
+  - Modais de confirmação para soft delete e restauração de registros.
+- **Seeders & Bootstrap:**
+  - Seeder com roles essenciais (`admin`, `viewer`) e permissions padrão para todos os recursos.
+  - Criação/suporte a usuário Super Admin via configuração local/ambiente.
+- **Suíte de Testes Pest:**
+  - Cobertura completa de Policies, Gates, Actions e componentes Livewire (caminhos positivos e negativos com 403 Forbidden).
 
-## Modelagem de dados
+---
 
-Seguir convenções do projeto: **UUID como chave primária**, **soft deletes** em todos os models, `$guarded = []` com `Model::unguard()` restrito ao contexto de seeding/factories quando aplicável, `declare(strict_types=1)` em todos os arquivos PHP.
+## 3. Fora de Escopo
+
+- Pacotes externos de autorização (Spatie Permission, Silber/Bouncer, etc.).
+- Multi-tenancy (o boilerplate é single-tenant).
+- Autenticação e fluxo de login/registro (já provido nativamente pelo Laravel Fortify com Passkeys e 2FA).
+- Telas em painel Filament (o foco deste módulo são componentes Livewire 4 nativos com Flux UI).
+
+---
+
+## 4. Modelagem de Dados
+
+### Convenções
+- Chave primária: **UUID** (`$table->uuid('id')->primary()`).
+- Migrações iniciais de `users` e `passkeys` ajustadas para chave primária UUID.
+- Todas as tabelas de entidades incluem `softDeletes()` e `timestamps()`.
+- Models Eloquent utilizam `$guarded = []` com atributos estritamente validados via DTO/Form Objects.
+
+### Schema Relacional
 
 ```
 users
-  - id (uuid, pk)
-  - name
-  - email (unique)
-  - password
+  - id (uuid, primary key)
+  - name (string)
+  - email (string, unique)
+  - password (string)
   - is_super_admin (boolean, default false)
-  - timestamps, soft deletes
+  - email_verified_at (timestamp, nullable)
+  - remember_token (string, nullable)
+  - created_at, updated_at, deleted_at (timestamps, soft deletes)
 
 roles
-  - id (uuid, pk)
-  - name
-  - slug (unique)
-  - description (nullable)
-  - timestamps, soft deletes
+  - id (uuid, primary key)
+  - name (string)
+  - slug (string, unique)
+  - description (text, nullable)
+  - created_at, updated_at, deleted_at (timestamps, soft deletes)
 
 permissions
-  - id (uuid, pk)
-  - name
-  - slug (unique)                  # ex: "users.view", "users.create", "roles.delete"
-  - description (nullable)
-  - timestamps, soft deletes
+  - id (uuid, primary key)
+  - name (string)
+  - slug (string, unique)                 # ex: "users.view", "roles.create"
+  - description (text, nullable)
+  - created_at, updated_at, deleted_at (timestamps, soft deletes)
 
 role_user (pivot)
-  - role_id (uuid, fk)
-  - user_id (uuid, fk)
-  - timestamps
+  - user_id (uuid, foreign key -> users.id, cascade on delete)
+  - role_id (uuid, foreign key -> roles.id, cascade on delete)
+  - created_at, updated_at
 
 permission_role (pivot)
-  - permission_id (uuid, fk)
-  - role_id (uuid, fk)
-  - timestamps
+  - role_id (uuid, foreign key -> roles.id, cascade on delete)
+  - permission_id (uuid, foreign key -> permissions.id, cascade on delete)
+  - created_at, updated_at
 ```
 
-Relacionamentos:
-- `User belongsToMany Role`
-- `Role belongsToMany User`
-- `Role belongsToMany Permission`
-- `Permission belongsToMany Role`
+### Relacionamentos Eloquent
+- `User`: `belongsToMany(Role::class, 'role_user')`
+- `Role`: `belongsToMany(User::class, 'role_user')` e `belongsToMany(Permission::class, 'permission_role')`
+- `Permission`: `belongsToMany(Role::class, 'permission_role')`
 
-## Camada de autorização (100% nativa)
+---
 
-### 1. Trait `HasPermissions` no model `User`
+## 5. Camada de Autorização (100% Nativa)
 
-Criar um trait com os métodos:
-- `hasRole(string $slug): bool`
-- `hasPermissionTo(string $slug): bool` — verifica se alguma das roles do usuário possui a permission com o slug informado (usar eager loading / cache em memória por request para evitar N+1).
-- `isSuperAdmin(): bool` — retorna `is_super_admin`.
+### 5.1 Trait `HasPermissions` (em `User`)
+- `hasRole(string|array $roles): bool`
+- `hasPermissionTo(string $permissionSlug): bool`:
+  - Carrega em memória as permissões agregadas via roles com eager-loading (`roles.permissions`).
+  - Cache em memória por request para evitar N+1 queries em checagens repetidas.
+- `isSuperAdmin(): bool`: retorna se o usuário é super administrador.
 
-### 2. Registro dinâmico de Gates (`AuthServiceProvider::boot()`)
+### 5.2 Registro de Gates Resiliente (`AuthServiceProvider` / `AppServiceProvider`)
+- **Super-Admin Bypass:**
+  ```php
+  Gate::before(fn (User $user) => $user->isSuperAdmin() ? true : null);
+  ```
+- **Carregamento Dinâmico Seguro:**
+  - Evitar consultas ao banco antes da execução das migrations (verificação prévia de schema ou tratamento seguro no boot).
+  - Cache atômico com tag ou chave perene: `Cache::rememberForever('auth.permissions.slugs', ...)`.
+  - Para cada slug em cache, registrar `Gate::define($slug, fn (User $user) => $user->hasPermissionTo($slug));`.
+  - Invalidação de cache disparada nos métodos de criação, atualização e exclusão de permissões.
 
-- `Gate::before(fn (User $user) => $user->isSuperAdmin() ? true : null);` — bypass total para super-admin.
-- Iterar sobre todas as permissions cadastradas (com cache — `Cache::rememberForever('permissions.slugs', ...)`, invalidado ao salvar/excluir uma permission) e registrar um `Gate::define($permission->slug, fn (User $user) => $user->hasPermissionTo($permission->slug));`.
-- Documentar no código por que o cache é necessário (evitar query em toda request só para registrar Gates).
+### 5.3 Policies de Domínio
+`UserPolicy`, `RolePolicy` e `PermissionPolicy` implementam os métodos canônicos do Laravel (`viewAny`, `view`, `create`, `update`, `delete`, `restore`, `forceDelete`):
+- Cada método delega explicitamente para o Gate correspondente:
+  ```php
+  public function viewAny(User $user): bool
+  {
+      return $user->can('users.view');
+  }
+  ```
+- Políticas impedem que um usuário exclua ou remova o privilégio do seu próprio usuário enquanto logado, e impedem remoção de roles protegidas de sistema.
 
-### 3. Policies
+---
 
-Criar `UserPolicy`, `RolePolicy`, `PermissionPolicy` com os métodos padrão (`viewAny`, `view`, `create`, `update`, `delete`, `restore`, `forceDelete`), cada um delegando para o Gate correspondente, por exemplo:
+## 6. Arquitetura de Software e Estrutura de Pastas
 
-```php
-public function viewAny(User $user): bool
-{
-    return $user->can('users.view');
-}
-```
-
-Registrar as Policies explicitamente no `AuthServiceProvider` (ou via convenção de nomes do Laravel 13, se o projeto já seguir esse padrão).
-
-### 4. Uso nos componentes Livewire
-
-- `$this->authorize('viewAny', User::class)` no `mount()` **e** revalidação de autorização dentro de cada método de ação (create/update/delete) — não confiar apenas no `mount()`, conforme convenção de segurança do projeto (o componente pode ser re-hidratado com payload manipulado entre requests).
-- `@can` nas views Blade/Livewire para esconder botões — lembrando que isso é UX, não autorização (a checagem real é sempre no backend).
-
-## Estrutura de pastas (por domínio)
+Organização modular em **`app/Domain/Auth/`**:
 
 ```
 app/
   Domain/
     Auth/
-      Models/{User,Role,Permission}.php
-      Policies/{UserPolicy,RolePolicy,PermissionPolicy}.php
-      Actions/{CreateUser,UpdateUser,DeleteUser,AssignRolesToUser,SyncRolePermissions}.php
-      DTOs/{UserData,RoleData,PermissionData}.php   # final readonly, com fromArray()
+      Models/
+        User.php
+        Role.php
+        Permission.php
+        Concerns/
+          HasPermissions.php
+      Policies/
+        UserPolicy.php
+        RolePolicy.php
+        PermissionPolicy.php
+      DTOs/
+        UserData.php
+        RoleData.php
+        PermissionData.php
+      Actions/
+        CreateUserAction.php
+        UpdateUserAction.php
+        DeleteUserAction.php
+        RestoreUserAction.php
+        AssignRolesToUserAction.php
+        CreateRoleAction.php
+        UpdateRoleAction.php
+        DeleteRoleAction.php
+        SyncRolePermissionsAction.php
+        CreatePermissionAction.php
+        UpdatePermissionAction.php
+        DeletePermissionAction.php
       Livewire/
-        Users/{UserIndex,UserForm}.php
-        Roles/{RoleIndex,RoleForm}.php
-        Permissions/{PermissionIndex,PermissionForm}.php
+        Forms/
+          UserForm.php          # Livewire\Form para validação e estado de Users
+          RoleForm.php          # Livewire\Form para validação e estado de Roles
+          PermissionForm.php    # Livewire\Form para validação e estado de Permissions
+        Users/
+          UserIndex.php
+          UserCreate.php
+          UserEdit.php
+        Roles/
+          RoleIndex.php
+          RoleCreate.php
+          RoleEdit.php
+        Permissions/
+          PermissionIndex.php
+          PermissionCreate.php
+          PermissionEdit.php
 database/
-  migrations/...
-  seeders/{RolePermissionSeeder}.php
-tests/
-  Feature/Domain/Auth/...
+  migrations/
+    0001_01_01_000000_create_users_table.php       # Ajustada para UUID
+    2024_01_01_000000_create_passkeys_table.php    # Ajustada para FK UUID
+    xxxx_xx_xx_xxxxxx_create_roles_table.php
+    xxxx_xx_xx_xxxxxx_create_permissions_table.php
+    xxxx_xx_xx_xxxxxx_create_role_user_table.php
+    xxxx_xx_xx_xxxxxx_create_permission_role_table.php
+  seeders/
+    RolePermissionSeeder.php
 ```
 
-Usar **Action classes** (`final readonly`, um `__invoke`) para as operações de escrita (criar/atualizar/excluir/atribuir), e **DTOs** (`final readonly` com `fromArray()`) para transportar dados validados até a Action — conforme padrão já usado no projeto.
+### Fluxo de Dados UI → Domínio
+1. **Livewire Form Object (`Livewire\Form`):** Recebe o input do usuário na tela, aplica validações com atributos `#[Validate]` e mantém o estado sincronizado com o Flux UI.
+2. **DTO (`final readonly`):** O Form Object invoca `toDTO()`, gerando um DTO imutável e fortemente tipado.
+3. **Action (`final readonly`):** A Action executa a regra de negócio e persistência no banco dentro de transações de banco de dados (`DB::transaction`).
 
-## Seeder padrão
+---
 
-Criar `RolePermissionSeeder` com:
-- Permissions básicas para cada recurso: `{resource}.view`, `{resource}.create`, `{resource}.update`, `{resource}.delete` para `users`, `roles`, `permissions`.
-- Roles: `admin` (todas as permissions) e `viewer` (apenas `.view`).
-- Um usuário `is_super_admin = true` para bootstrap local (via `.env`/factory, nunca hardcoded em produção).
+## 7. Componentes de Interface (Flux UI)
 
-## Componentes Livewire (Flux UI)
+Para cada recurso (`Users`, `Roles`, `Permissions`):
+- **Index:** Tabela Flux UI com filtro de pesquisa instantâneo, paginação assíncrona, badges informativas e ações restritas via `@can`.
+- **Formulários (Create/Edit):** Campos com componentes nativos Flux (`<flux:input>`, `<flux:textarea>`, `<flux:checkbox.group>` ou select múltiplo para roles e permissions).
+- **Modais de Ação:** Diálogos Flux (`<flux:modal>`) para confirmar soft deletes e restauração sem reload de página.
+- **Proteção Reativa:** `$this->authorize(...)` tanto no carregamento (`mount()`) quanto na execução de cada método de ação do componente.
 
-Para cada recurso (Users, Roles, Permissions):
-- **Index**: tabela Flux UI com busca, paginação, badges de role/permission, ações condicionadas a `@can`.
-- **Form**: modal ou página de criar/editar, com validação via Livewire (`#[Validate]` ou Form Objects), multi-select para roles (no form de User) e permissions (no form de Role).
-- Confirmação de exclusão (soft delete) com modal Flux, e ação de restaurar para registros excluídos.
+---
 
-## Testes (Pest)
+## 8. Estratégia de Testes (Pest)
 
-- `UserPolicyTest`, `RolePolicyTest`, `PermissionPolicyTest`: cobrir allow/deny para cada ability, incluindo o bypass do super-admin.
-- Teste de que o Gate dinâmico é registrado corretamente a partir de uma permission recém-criada (e que o cache é invalidado ao criar/editar/excluir uma permission).
-- Testes de Livewire (`Livewire::test(...)`) para cada componente: caminho feliz (usuário autorizado consegue operar) e caminho negativo (usuário sem a permission recebe 403).
+Localização dos testes: `tests/Feature/Domain/Auth/`.
 
-## Definição de pronto
+- **Testes de Policies e Gates:**
+  - Verificação de acesso concedido com permissão específica.
+  - Verificação de acesso negado (403) para usuário sem a devida role/permissão.
+  - Verificação do bypass automático do Super Admin em todos os recursos.
+  - Verificação de invalidação do cache de permissões após criar/atualizar/excluir.
+- **Testes de Actions:**
+  - Testes unitários para garantir que cada Action cria/atualiza/exclui registros e sincroniza pivots corretamente.
+- **Testes de Componentes Livewire:**
+  - `Livewire::test(UserIndex::class)` garantindo renderização correta de listagens e busca.
+  - Validação de formulários e mensagens de erro do Flux UI.
+  - Teste de submissão não autorizada abortando com 403 Forbidden.
 
-- [ ] Autorização, validação e tratamento de erro presentes em toda ação de escrita.
-- [ ] Nenhuma dependência de pacote externo para autorização.
-- [ ] Testes cobrindo caminho feliz e negativo para Policies, Gates e componentes Livewire.
-- [ ] Sem N+1 ao checar permissions (cache de slugs + eager loading de `roles.permissions`).
-- [ ] Pint executado.
-- [ ] `declare(strict_types=1)`, UUID PK, soft deletes e `final readonly` DTOs aplicados consistentemente.
+---
+
+## 9. Critérios de Aceite e Definição de Pronto (DoD)
+
+- [ ] Autorização e validação presentes em 100% dos métodos de escrita.
+- [ ] Nenhuma dependência externa adicionada no `composer.json` para autorização.
+- [ ] Chave primária UUID e soft deletes funcionando em todas as tabelas do domínio.
+- [ ] Cache de permissões resiliente e com invalidação atômica garantida.
+- [ ] Prevenção de queries N+1 comprovada via testes e profiling.
+- [ ] Todos os testes Pest passando (`vendor/bin/pest` ou `composer test`).
+- [ ] Análise estática do PHPStan / Larastan sem erros (`composer types:check`).
+- [ ] Formatação consistente executada pelo Laravel Pint (`composer lint:check`).
+- [ ] `declare(strict_types=1)` presente em todos os novos arquivos PHP.
