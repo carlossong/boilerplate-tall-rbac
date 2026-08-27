@@ -7,6 +7,7 @@ namespace App\Domain\Auth\Observers;
 use App\Domain\Auth\Enums\PermissionAuditAction;
 use App\Domain\Auth\Models\PermissionAuditLog;
 use App\Domain\Auth\Models\Pivots\DepartmentUser;
+use App\Domain\Auth\Support\AccessCache;
 
 class DepartmentUserObserver
 {
@@ -15,6 +16,8 @@ class DepartmentUserObserver
         if (blank($pivot->role_id)) {
             return;
         }
+
+        AccessCache::forgetUser($pivot->user_id);
 
         PermissionAuditLog::record(
             PermissionAuditAction::Assigned,
@@ -31,6 +34,8 @@ class DepartmentUserObserver
         if (! $pivot->wasChanged('role_id')) {
             return;
         }
+
+        AccessCache::forgetUser($pivot->user_id);
 
         $previousRoleId = $pivot->getOriginal('role_id');
         $currentRoleId = $pivot->role_id;
@@ -63,6 +68,8 @@ class DepartmentUserObserver
         if (blank($pivot->role_id)) {
             return;
         }
+
+        AccessCache::forgetUser($pivot->user_id);
 
         PermissionAuditLog::record(
             PermissionAuditAction::Revoked,

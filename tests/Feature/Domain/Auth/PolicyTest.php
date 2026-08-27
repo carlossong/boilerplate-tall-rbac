@@ -43,9 +43,6 @@ class PolicyTest extends TestCase
         $role->permissions()->attach($permission);
         $user->roles()->attach($role);
 
-        // Update gates with the new permission
-        Gate::define('users.view', fn ($u) => $u->hasPermissionTo('users.view'));
-
         $this->assertTrue($user->can('users.view'));
         $this->assertFalse($user->can('users.delete'));
     }
@@ -58,8 +55,6 @@ class PolicyTest extends TestCase
 
         $role->permissions()->attach($permission);
         $user->roles()->attach($role);
-
-        Gate::define('users.delete', fn ($u) => $u->hasPermissionTo('users.delete'));
 
         $otherUser = User::factory()->create();
 
@@ -78,8 +73,6 @@ class PolicyTest extends TestCase
 
         $role->permissions()->attach($permission);
         $user->roles()->attach($role);
-
-        Gate::define('roles.delete', fn ($u) => $u->hasPermissionTo('roles.delete'));
 
         $adminRole = Role::factory()->create(['slug' => 'admin', 'level' => 80]);
         $customRole = Role::factory()->create(['slug' => 'custom', 'level' => 10]);

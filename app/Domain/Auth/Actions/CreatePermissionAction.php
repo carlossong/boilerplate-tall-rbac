@@ -17,8 +17,6 @@ final readonly class CreatePermissionAction
             'description' => $data->description,
         ]);
 
-        Permission::flushCache();
-
         return $permission;
     }
 }

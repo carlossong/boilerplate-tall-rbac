@@ -8,7 +8,6 @@ use App\Domain\Auth\Models\Permission;
 use App\Domain\Auth\Models\Role;
 use App\Domain\Auth\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Gate;
 use Tests\TestCase;
 
 class LevelHierarchyTest extends TestCase
@@ -20,9 +19,6 @@ class LevelHierarchyTest extends TestCase
         // Setup permissions
         $updatePermission = Permission::factory()->create(['slug' => 'users.update']);
         $deletePermission = Permission::factory()->create(['slug' => 'users.delete']);
-
-        Gate::define('users.update', fn ($u) => $u->hasPermissionTo('users.update'));
-        Gate::define('users.delete', fn ($u) => $u->hasPermissionTo('users.delete'));
 
         // Manager (Level 50)
         $managerRole = Role::factory()->create(['name' => 'Manager', 'slug' => 'manager', 'level' => 50]);
@@ -63,7 +59,6 @@ class LevelHierarchyTest extends TestCase
         $adminRole = Role::factory()->create(['level' => 80]);
         $deletePermission = Permission::factory()->create(['slug' => 'users.delete']);
         $adminRole->permissions()->attach($deletePermission);
-        Gate::define('users.delete', fn ($u) => $u->hasPermissionTo('users.delete'));
 
         $admin = User::factory()->create();
         $admin->roles()->attach($adminRole);
@@ -86,8 +81,6 @@ class LevelHierarchyTest extends TestCase
     {
         $rolePermission = Permission::factory()->create(['slug' => 'roles.update']);
         $deletePermission = Permission::factory()->create(['slug' => 'roles.delete']);
-        Gate::define('roles.update', fn ($u) => $u->hasPermissionTo('roles.update'));
-        Gate::define('roles.delete', fn ($u) => $u->hasPermissionTo('roles.delete'));
 
         $managerRole = Role::factory()->create(['name' => 'Manager', 'slug' => 'manager', 'level' => 50]);
         $managerRole->permissions()->attach([$rolePermission->id, $deletePermission->id]);

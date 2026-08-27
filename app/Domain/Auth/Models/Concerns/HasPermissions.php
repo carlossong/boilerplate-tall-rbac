@@ -6,19 +6,10 @@ namespace App\Domain\Auth\Models\Concerns;
 
 use App\Domain\Auth\Models\Department;
 use App\Domain\Auth\Models\Role;
+use App\Domain\Auth\Support\AccessCache;
 
 trait HasPermissions
 {
-    /**
-     * @var array<string>|null
-     */
-    protected ?array $cachedPermissionSlugs = null;
-
-    /**
-     * @var array<string, array<string>>
-     */
-    protected array $cachedDepartmentPermissionSlugs = [];
-
     protected ?int $cachedHighestRoleLevel = null;
 
     /**
@@ -51,16 +42,16 @@ trait HasPermissions
             $this->loadMissing('departments');
         }
 
-        $allCachedRoles = Role::getCachedRoles();
+        $catalog = AccessCache::roleCatalog();
 
         foreach ($this->departments as $dept) {
-            if ($dept->pivot && ! empty($dept->pivot->role_id)) {
-                $roleId = $dept->pivot->role_id;
-                if (isset($allCachedRoles[$roleId])) {
-                    if (in_array($allCachedRoles[$roleId]->slug, $rolesList, true)) {
-                        return true;
-                    }
-                }
+            $roleId = $dept->pivot->role_id ?? null;
+            if (! filled($roleId) || ! isset($catalog[$roleId])) {
+                continue;
+            }
+
+            if (in_array($catalog[$roleId]['slug'], $rolesList, true)) {
+                return true;
             }
         }
 
@@ -96,13 +87,13 @@ trait HasPermissions
         }
 
         $dept = $this->departments->firstWhere('id', $departmentId);
-        if (! $dept || ! $dept->pivot || empty($dept->pivot->role_id)) {
+        if (! $dept || ! filled($dept->pivot->role_id ?? null)) {
             return false;
         }
 
-        $cachedRole = Role::getCachedRoles()->get($dept->pivot->role_id);
+        $cachedRole = AccessCache::roleCatalog()[$dept->pivot->role_id] ?? null;
 
-        return $cachedRole !== null && in_array($cachedRole->slug, $rolesList, true);
+        return $cachedRole !== null && in_array($cachedRole['slug'], $rolesList, true);
     }
 
     /**
@@ -118,37 +109,7 @@ trait HasPermissions
             return $this->hasPermissionInDepartment($permissionSlug, $department);
         }
 
-        if ($this->cachedPermissionSlugs === null) {
-            if (! $this->relationLoaded('roles')) {
-                $this->loadMissing('roles.permissions');
-            } else {
-                $this->roles->loadMissing('permissions');
-            }
-
-            $slugs = $this->roles
-                ->flatMap(fn ($role) => $role->permissions)
-                ->pluck('slug');
-
-            // Include permissions from departmental roles in-memory
-            if (! $this->relationLoaded('departments')) {
-                $this->loadMissing('departments');
-            }
-
-            $allCachedRoles = Role::getCachedRoles();
-
-            foreach ($this->departments as $dept) {
-                if ($dept->pivot && ! empty($dept->pivot->role_id)) {
-                    $roleId = $dept->pivot->role_id;
-                    if (isset($allCachedRoles[$roleId])) {
-                        $slugs = $slugs->merge($allCachedRoles[$roleId]->permissions->pluck('slug'));
-                    }
-                }
-            }
-
-            $this->cachedPermissionSlugs = $slugs->unique()->all();
-        }
-
-        return in_array($permissionSlug, $this->cachedPermissionSlugs, true);
+        return in_array($permissionSlug, AccessCache::permissionSlugsFor($this), true);
     }
 
     /**
@@ -160,38 +121,7 @@ trait HasPermissions
             return true;
         }
 
-        $departmentId = $department instanceof Department ? $department->id : $department;
-
-        if (isset($this->cachedDepartmentPermissionSlugs[$departmentId])) {
-            return in_array($permissionSlug, $this->cachedDepartmentPermissionSlugs[$departmentId], true);
-        }
-
-        // Global permissions grant access inside all departments
-        if (! $this->relationLoaded('roles')) {
-            $this->loadMissing('roles.permissions');
-        } else {
-            $this->roles->loadMissing('permissions');
-        }
-
-        $slugs = $this->roles
-            ->flatMap(fn ($role) => $role->permissions)
-            ->pluck('slug');
-
-        if (! $this->relationLoaded('departments')) {
-            $this->loadMissing('departments');
-        }
-
-        $dept = $this->departments->firstWhere('id', $departmentId);
-        if ($dept && $dept->pivot && ! empty($dept->pivot->role_id)) {
-            $cachedRole = Role::getCachedRoles()->get($dept->pivot->role_id);
-            if ($cachedRole) {
-                $slugs = $slugs->merge($cachedRole->permissions->pluck('slug'));
-            }
-        }
-
-        $this->cachedDepartmentPermissionSlugs[$departmentId] = $slugs->unique()->all();
-
-        return in_array($permissionSlug, $this->cachedDepartmentPermissionSlugs[$departmentId], true);
+        return in_array($permissionSlug, AccessCache::permissionSlugsFor($this, $department), true);
     }
 
     /**
@@ -219,14 +149,12 @@ trait HasPermissions
                 $this->loadMissing('departments');
             }
 
-            $allCachedRoles = Role::getCachedRoles();
+            $catalog = AccessCache::roleCatalog();
 
             foreach ($this->departments as $dept) {
-                if ($dept->pivot && ! empty($dept->pivot->role_id)) {
-                    $roleId = $dept->pivot->role_id;
-                    if (isset($allCachedRoles[$roleId])) {
-                        $levels->push($allCachedRoles[$roleId]->level);
-                    }
+                $roleId = $dept->pivot->role_id ?? null;
+                if (filled($roleId) && isset($catalog[$roleId])) {
+                    $levels->push($catalog[$roleId]['level']);
                 }
             }
 
@@ -243,10 +171,10 @@ trait HasPermissions
         }
 
         $dept = $this->departments->firstWhere('id', $departmentId);
-        if ($dept && $dept->pivot && ! empty($dept->pivot->role_id)) {
-            $cachedRole = Role::getCachedRoles()->get($dept->pivot->role_id);
-            if ($cachedRole) {
-                $levels->push($cachedRole->level);
+        if ($dept && filled($dept->pivot->role_id ?? null)) {
+            $cachedRole = AccessCache::roleCatalog()[$dept->pivot->role_id] ?? null;
+            if ($cachedRole !== null) {
+                $levels->push($cachedRole['level']);
             }
         }
 
@@ -300,8 +228,10 @@ trait HasPermissions
      */
     public function flushCachedPermissions(): void
     {
-        $this->cachedPermissionSlugs = null;
-        $this->cachedDepartmentPermissionSlugs = [];
         $this->cachedHighestRoleLevel = null;
+
+        if (isset($this->id)) {
+            AccessCache::forgetUser($this->id);
+        }
     }
 }

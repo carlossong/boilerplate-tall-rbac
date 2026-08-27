@@ -13,11 +13,9 @@ use App\Domain\Auth\Policies\RolePolicy;
 use App\Domain\Auth\Policies\UserPolicy;
 use App\Models\User;
 use Carbon\CarbonImmutable;
-use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Validation\Rules\Password;
 
@@ -60,8 +58,8 @@ class AppServiceProvider extends ServiceProvider
             return null;
         });
 
-        Gate::after(function ($user, string $ability, ?bool $result) {
-            if ($result !== null) {
+        Gate::after(function ($user, string $ability, ?bool $result, array $arguments) {
+            if ($result !== null || $arguments !== []) {
                 return $result;
             }
 
@@ -71,22 +69,6 @@ class AppServiceProvider extends ServiceProvider
 
             return null;
         });
-
-        try {
-            if (Schema::hasTable('permissions')) {
-                $permissionSlugs = Cache::rememberForever('auth.permissions.slugs', function () {
-                    return Permission::query()->pluck('slug')->all();
-                });
-
-                foreach ($permissionSlugs as $slug) {
-                    Gate::define($slug, function ($user) use ($slug) {
-                        return $user instanceof \App\Domain\Auth\Models\User && $user->hasPermissionTo($slug);
-                    });
-                }
-            }
-        } catch (\Throwable) {
-            // Prevents failure during initial migrations before table exists
-        }
     }
 
     /**

@@ -7,11 +7,14 @@ namespace App\Domain\Auth\Observers;
 use App\Domain\Auth\Enums\PermissionAuditAction;
 use App\Domain\Auth\Models\PermissionAuditLog;
 use App\Domain\Auth\Models\Pivots\PermissionRole;
+use App\Domain\Auth\Support\AccessCache;
 
 class PermissionRoleObserver
 {
     public function created(PermissionRole $pivot): void
     {
+        AccessCache::forgetRole($pivot->role_id);
+
         PermissionAuditLog::record(
             PermissionAuditAction::Assigned,
             PermissionAuditLog::SUBJECT_ROLE,
@@ -23,6 +26,8 @@ class PermissionRoleObserver
 
     public function deleted(PermissionRole $pivot): void
     {
+        AccessCache::forgetRole($pivot->role_id);
+
         PermissionAuditLog::record(
             PermissionAuditAction::Revoked,
             PermissionAuditLog::SUBJECT_ROLE,

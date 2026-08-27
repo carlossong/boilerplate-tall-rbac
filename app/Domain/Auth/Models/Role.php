@@ -7,6 +7,7 @@ namespace App\Domain\Auth\Models;
 use App\Domain\Auth\Enums\RoleLevel;
 use App\Domain\Auth\Models\Pivots\PermissionRole;
 use App\Domain\Auth\Models\Pivots\RoleUser;
+use App\Domain\Auth\Support\AccessCache;
 use Database\Factories\RoleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -42,44 +43,12 @@ class Role extends Model
 
     public const int LEVEL_VIEWER = 10;
 
-    /**
-     * @var Collection<string, Role>|null
-     */
-    protected static ?Collection $cachedRoles = null;
-
     protected $guarded = [];
 
     protected static function booted(): void
     {
-        static::saved(fn () => static::flushCache());
-        static::deleted(fn () => static::flushCache());
-    }
-
-    /**
-     * Get all active roles with their permissions memoized in-memory.
-     *
-     * @return Collection<string, Role>
-     */
-    public static function getCachedRoles(): Collection
-    {
-        if (static::$cachedRoles === null) {
-            /** @var Collection<string, Role> $roles */
-            $roles = static::with('permissions')
-                ->get()
-                ->keyBy('id');
-
-            static::$cachedRoles = $roles;
-        }
-
-        return static::$cachedRoles;
-    }
-
-    /**
-     * Flush the in-memory memoized roles.
-     */
-    public static function flushCache(): void
-    {
-        static::$cachedRoles = null;
+        static::saved(fn (Role $role) => AccessCache::forgetRole($role->id));
+        static::deleted(fn (Role $role) => AccessCache::forgetRole($role->id));
     }
 
     /**

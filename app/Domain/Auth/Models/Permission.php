@@ -5,13 +5,13 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Models;
 
 use App\Domain\Auth\Models\Pivots\PermissionRole;
+use App\Domain\Auth\Support\AccessCache;
 use Database\Factories\PermissionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Illuminate\Support\Facades\Cache;
 
 class Permission extends Model
 {
@@ -31,24 +31,24 @@ class Permission extends Model
     protected static function booted(): void
     {
         static::saved(function () {
-            static::flushCache();
+            AccessCache::forgetPermissions();
         });
 
         static::deleted(function () {
-            static::flushCache();
+            AccessCache::forgetPermissions();
         });
 
         static::restored(function () {
-            static::flushCache();
+            AccessCache::forgetPermissions();
         });
     }
 
     /**
-     * Flush cached permissions slugs.
+     * Flush cached permission catalogs and user permission sets.
      */
     public static function flushCache(): void
     {
-        Cache::forget('auth.permissions.slugs');
+        AccessCache::forgetPermissions();
     }
 
     /**

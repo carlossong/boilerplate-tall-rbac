@@ -10,9 +10,6 @@ final readonly class DeletePermissionAction
 {
     public function __invoke(Permission $permission): bool
     {
-        $deleted = (bool) $permission->delete();
-        Permission::flushCache();
-
-        return $deleted;
+        return (bool) $permission->delete();
     }
 }

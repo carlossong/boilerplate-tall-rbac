@@ -10,9 +10,6 @@ final readonly class RestorePermissionAction
 {
     public function __invoke(Permission $permission): bool
     {
-        $restored = (bool) $permission->restore();
-        Permission::flushCache();
-
-        return $restored;
+        return (bool) $permission->restore();
     }
 }

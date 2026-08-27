@@ -57,8 +57,6 @@ class RolePermissionSeeder extends Seeder
             );
         }
 
-        Permission::flushCache();
-
         // 2. Register Departments
         $executive = Department::updateOrCreate(
             ['slug' => 'executive-board'],
