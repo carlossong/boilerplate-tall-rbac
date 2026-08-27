@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Models;
 
 use App\Domain\Auth\Models\Pivots\PermissionRole;
+use App\Domain\Auth\Models\Pivots\PermissionUser;
 use App\Domain\Auth\Support\AccessCache;
 use Database\Factories\PermissionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -12,7 +13,15 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
+/**
+ * @property string $id
+ * @property string $name
+ * @property string $slug
+ * @property string $group
+ * @property string|null $description
+ */
 class Permission extends Model
 {
     /** @use HasFactory<PermissionFactory> */
@@ -30,6 +39,12 @@ class Permission extends Model
 
     protected static function booted(): void
     {
+        static::saving(function (self $permission): void {
+            if (blank($permission->group)) {
+                $permission->group = self::groupFromSlug((string) $permission->slug);
+            }
+        });
+
         static::saved(function () {
             AccessCache::forgetPermissions();
         });
@@ -41,6 +56,39 @@ class Permission extends Model
         static::restored(function () {
             AccessCache::forgetPermissions();
         });
+    }
+
+    /**
+     * UI grouping key inferred from the slug prefix when no explicit group is set.
+     */
+    public static function groupFromSlug(string $slug): string
+    {
+        $parts = explode('.', $slug);
+
+        return count($parts) > 1 ? $parts[0] : 'other';
+    }
+
+    /**
+     * Group used for assignment UIs. Falls back to the slug prefix.
+     */
+    public function groupKey(): string
+    {
+        return filled($this->group) ? $this->group : self::groupFromSlug($this->slug);
+    }
+
+    /**
+     * @return Collection<int|string, \Illuminate\Database\Eloquent\Collection<int, static>>
+     */
+    public static function groupedForAssignment(): Collection
+    {
+        return new Collection(
+            static::query()
+                ->orderBy('group')
+                ->orderBy('slug')
+                ->get()
+                ->groupBy(fn (self $permission): string => $permission->groupKey())
+                ->all(),
+        );
     }
 
     /**
@@ -58,6 +106,18 @@ class Permission extends Model
     {
         return $this->belongsToMany(Role::class, 'permission_role')
             ->using(PermissionRole::class)
+            ->withTimestamps();
+    }
+
+    /**
+     * Direct grants that sit outside role assignment.
+     *
+     * @return BelongsToMany<User, $this, PermissionUser>
+     */
+    public function users(): BelongsToMany
+    {
+        return $this->belongsToMany(User::class, 'permission_user')
+            ->using(PermissionUser::class)
             ->withTimestamps();
     }
 }

@@ -17,6 +17,8 @@ class PermissionForm extends Form
 
     public string $slug = '';
 
+    public string $group = '';
+
     public string $description = '';
 
     /**
@@ -33,6 +35,7 @@ class PermissionForm extends Form
                 'regex:/^[a-z0-9]+(\.[a-z0-9_\-]+)+$/',
                 Rule::unique('permissions', 'slug')->ignore($this->id),
             ],
+            'group' => ['nullable', 'string', 'max:64', 'regex:/^(?:[a-z0-9]+(?:[._\-][a-z0-9]+)*)?$/'],
             'description' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -44,6 +47,7 @@ class PermissionForm extends Form
     {
         return [
             'slug.regex' => __('The permission slug must follow the pattern "resource.action" (e.g. users.view, roles.create).'),
+            'group.regex' => __('The group must be lowercase (e.g. users, billing, audit-logs).'),
         ];
     }
 
@@ -58,6 +62,7 @@ class PermissionForm extends Form
         $this->id = $permission->id;
         $this->name = $permission->name;
         $this->slug = $permission->slug;
+        $this->group = $permission->group ?? '';
         $this->description = $permission->description ?? '';
     }
 
@@ -67,6 +72,7 @@ class PermissionForm extends Form
             name: $this->name,
             slug: $this->slug,
             description: filled($this->description) ? $this->description : null,
+            group: filled($this->group) ? $this->group : null,
         );
     }
 }

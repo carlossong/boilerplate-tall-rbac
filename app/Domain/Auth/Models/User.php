@@ -6,6 +6,7 @@ namespace App\Domain\Auth\Models;
 
 use App\Domain\Auth\Models\Concerns\HasPermissions;
 use App\Domain\Auth\Models\Pivots\DepartmentUser;
+use App\Domain\Auth\Models\Pivots\PermissionUser;
 use App\Domain\Auth\Models\Pivots\RoleUser;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
@@ -39,6 +40,7 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $deleted_at
  * @property Collection<int, Role> $roles
  * @property Collection<int, Department> $departments
+ * @property Collection<int, Permission> $permissions
  */
 #[Fillable(['name', 'email', 'password', 'is_super_admin'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -94,6 +96,18 @@ class User extends Authenticatable implements PasskeyUser
     {
         return $this->belongsToMany(Role::class, 'role_user')
             ->using(RoleUser::class)
+            ->withTimestamps();
+    }
+
+    /**
+     * Direct permission grants for one-off exceptions without a dedicated role.
+     *
+     * @return BelongsToMany<Permission, $this, PermissionUser>
+     */
+    public function permissions(): BelongsToMany
+    {
+        return $this->belongsToMany(Permission::class, 'permission_user')
+            ->using(PermissionUser::class)
             ->withTimestamps();
     }
 

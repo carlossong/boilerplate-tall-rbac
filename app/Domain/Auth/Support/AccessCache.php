@@ -93,6 +93,7 @@ final class AccessCache
 
         $user->unsetRelation('roles');
         $user->unsetRelation('departments');
+        $user->unsetRelation('permissions');
 
         $roleIds = self::roleIdsFor($user);
 
@@ -206,7 +207,7 @@ final class AccessCache
     private static function resolvePermissionSlugs(User $user, Department|string|null $department = null): array
     {
         $catalog = self::roleCatalog();
-        $user->loadMissing(['roles', 'departments']);
+        $user->loadMissing(['roles', 'departments', 'permissions']);
 
         $roleIds = $user->roles->pluck('id');
 
@@ -235,6 +236,10 @@ final class AccessCache
             foreach ($catalog[$roleId]['permissions'] as $slug) {
                 $slugs[$slug] = true;
             }
+        }
+
+        foreach ($user->permissions as $permission) {
+            $slugs[$permission->slug] = true;
         }
 
         return array_keys($slugs);
@@ -278,6 +283,7 @@ final class AccessCache
         return self::uniqueStringIds(array_merge(
             DB::table('role_user')->pluck('user_id')->all(),
             DB::table('department_user')->whereNotNull('role_id')->pluck('user_id')->all(),
+            DB::table('permission_user')->pluck('user_id')->all(),
         ));
     }
 

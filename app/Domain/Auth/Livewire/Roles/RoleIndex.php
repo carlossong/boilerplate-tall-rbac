@@ -173,11 +173,7 @@ class RoleIndex extends Component
         }
 
         $roles = $query->with('departments')->orderByLevel()->paginate(10);
-        $allPermissions = Permission::orderBy('slug')->get()->groupBy(function ($perm) {
-            $parts = explode('.', $perm->slug);
-
-            return count($parts) > 1 ? $parts[0] : 'other';
-        });
+        $allPermissions = Permission::groupedForAssignment();
 
         $stats = [
             'total' => Role::withTrashed()->count(),

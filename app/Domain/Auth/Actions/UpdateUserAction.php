@@ -50,6 +50,7 @@ final readonly class UpdateUserAction
 
             $user->update($attributes);
             $user->roles()->sync($data->roleIds);
+            $user->permissions()->sync($data->permissionIds);
 
             $user->syncDepartments($data->departmentAssignments);
             $user->flushCachedPermissions();

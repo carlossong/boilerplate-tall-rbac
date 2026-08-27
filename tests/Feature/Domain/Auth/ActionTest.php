@@ -127,6 +127,7 @@ class ActionTest extends TestCase
         ));
 
         $this->assertEquals('articles.publish', $permission->slug);
+        $this->assertEquals('articles', $permission->group);
 
         $updateAction = app(UpdatePermissionAction::class);
         $updated = $updateAction($permission, new PermissionData(
@@ -135,6 +136,7 @@ class ActionTest extends TestCase
             description: 'Updated description',
         ));
         $this->assertEquals('Publish and Unpublish Articles', $updated->name);
+        $this->assertEquals('articles', $updated->group);
 
         $deleteAction = app(DeletePermissionAction::class);
         $deleteAction($permission);

@@ -53,7 +53,11 @@ class RolePermissionSeeder extends Seeder
         foreach ($permissions as $permData) {
             $createdPermissions[$permData['slug']] = Permission::updateOrCreate(
                 ['slug' => $permData['slug']],
-                ['name' => $permData['name'], 'description' => $permData['description']],
+                [
+                    'name' => $permData['name'],
+                    'description' => $permData['description'],
+                    'group' => Permission::groupFromSlug($permData['slug']),
+                ],
             );
         }
 

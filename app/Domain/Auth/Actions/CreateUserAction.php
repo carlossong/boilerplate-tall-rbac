@@ -26,6 +26,8 @@ final readonly class CreateUserAction
                 $user->roles()->sync($data->roleIds);
             }
 
+            $user->permissions()->sync($data->permissionIds);
+
             if (! empty($data->departmentAssignments)) {
                 $user->syncDepartments($data->departmentAssignments);
             }

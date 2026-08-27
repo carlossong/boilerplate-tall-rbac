@@ -15,6 +15,7 @@ final readonly class UpdatePermissionAction
             'name' => $data->name,
             'slug' => $data->slug,
             'description' => $data->description,
+            'group' => $data->group,
         ]);
 
         return $permission;

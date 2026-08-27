@@ -5,9 +5,12 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Policies;
 
 use App\Domain\Auth\Models\User;
+use App\Domain\Auth\Policies\Concerns\ChecksRecordAccess;
 
 class UserPolicy
 {
+    use ChecksRecordAccess;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -37,20 +40,13 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
+        return $this->allowsAbilityThenRecord($user, 'users.update', function (User $actor) use ($model): bool {
+            if ($actor->id === $model->id) {
+                return true;
+            }
 
-        if (! $user->can('users.update')) {
-            return false;
-        }
-
-        // Allows editing own profile if user has users.update permission
-        if ($user->id === $model->id) {
-            return true;
-        }
-
-        return $this->canManageUserHierarchy($user, $model);
+            return $this->canManageUserHierarchy($actor, $model);
+        });
     }
 
     /**
@@ -58,12 +54,10 @@ class UserPolicy
      */
     public function delete(User $user, User $model): bool
     {
-        // A user cannot delete their own account
         if ($user->id === $model->id) {
             return false;
         }
 
-        // Cannot delete the last active super administrator
         if ($model->isSuperAdmin()) {
             $otherActiveSuperAdmins = User::withoutTrashed()
                 ->where('is_super_admin', true)
@@ -75,15 +69,11 @@ class UserPolicy
             }
         }
 
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        if (! $user->can('users.delete')) {
-            return false;
-        }
-
-        return $this->canManageUserHierarchy($user, $model);
+        return $this->allowsAbilityThenRecord(
+            $user,
+            'users.delete',
+            fn (User $actor): bool => $this->canManageUserHierarchy($actor, $model),
+        );
     }
 
     /**
@@ -91,15 +81,11 @@ class UserPolicy
      */
     public function restore(User $user, User $model): bool
     {
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        if (! $user->can('users.delete')) {
-            return false;
-        }
-
-        return $this->canManageUserHierarchy($user, $model);
+        return $this->allowsAbilityThenRecord(
+            $user,
+            'users.delete',
+            fn (User $actor): bool => $this->canManageUserHierarchy($actor, $model),
+        );
     }
 
     /**

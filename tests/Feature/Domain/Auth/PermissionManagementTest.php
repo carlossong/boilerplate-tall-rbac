@@ -77,6 +77,38 @@ class PermissionManagementTest extends TestCase
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('permissions', ['slug' => 'invoices.download']);
+        $this->assertSame('invoices', Permission::where('slug', 'invoices.download')->value('group'));
+    }
+
+    public function test_permissions_can_be_filtered_by_group_column(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        Permission::create(['name' => 'Export Reports', 'slug' => 'reports.export', 'group' => 'billing']);
+        Permission::create(['name' => 'View Users Extra', 'slug' => 'users.export']);
+
+        Livewire::test(PermissionIndex::class)
+            ->set('groupFilter', 'billing')
+            ->assertSee('Export Reports')
+            ->assertDontSee('View Users Extra');
+    }
+
+    public function test_explicit_group_can_differ_from_slug_prefix(): void
+    {
+        $this->actingAs($this->adminUser);
+
+        Livewire::test(PermissionIndex::class)
+            ->call('openCreateModal')
+            ->set('form.name', 'Export Reports')
+            ->set('form.slug', 'reports.export')
+            ->set('form.group', 'billing')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertDatabaseHas('permissions', [
+            'slug' => 'reports.export',
+            'group' => 'billing',
+        ]);
     }
 
     public function test_can_update_permission(): void

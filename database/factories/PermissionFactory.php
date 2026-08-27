@@ -23,10 +23,12 @@ class PermissionFactory extends Factory
     public function definition(): array
     {
         $word = fake()->unique()->word();
+        $slug = 'custom.'.$word;
 
         return [
             'name' => Str::title($word).' Permission',
-            'slug' => 'custom.'.$word,
+            'slug' => $slug,
+            'group' => Permission::groupFromSlug($slug),
             'description' => fake()->sentence(),
         ];
     }

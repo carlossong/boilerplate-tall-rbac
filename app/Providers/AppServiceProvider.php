@@ -59,6 +59,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         Gate::after(function ($user, string $ability, ?bool $result, array $arguments) {
+            // Ability-only checks (can('users.update')) fall through to hasPermissionTo.
+            // Record checks (can('update', $client)) stay in the Policy that receives the model.
             if ($result !== null || $arguments !== []) {
                 return $result;
             }

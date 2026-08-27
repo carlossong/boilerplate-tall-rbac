@@ -10,6 +10,7 @@ use App\Domain\Auth\Actions\RestoreUserAction;
 use App\Domain\Auth\Actions\UpdateUserAction;
 use App\Domain\Auth\Livewire\Forms\UserForm;
 use App\Domain\Auth\Models\Department;
+use App\Domain\Auth\Models\Permission;
 use App\Domain\Auth\Models\Role;
 use App\Domain\Auth\Models\User;
 use DomainException;
@@ -71,7 +72,7 @@ class UserIndex extends Component
 
     public function openEditModal(string $id): void
     {
-        $user = User::withTrashed()->with(['roles', 'departments'])->findOrFail($id);
+        $user = User::withTrashed()->with(['roles', 'departments', 'permissions'])->findOrFail($id);
         $this->authorize('update', $user);
 
         $this->form->setUser($user);
@@ -194,6 +195,7 @@ class UserIndex extends Component
         $users = $query->latest()->paginate(10);
         $allRoles = Role::orderByLevel()->get();
         $availableDepartments = Department::where('is_active', true)->orderBy('name')->get();
+        $groupedPermissions = Permission::groupedForAssignment();
 
         $stats = [
             'total' => User::withTrashed()->count(),
@@ -206,6 +208,7 @@ class UserIndex extends Component
             'users' => $users,
             'allRoles' => $allRoles,
             'availableDepartments' => $availableDepartments,
+            'groupedPermissions' => $groupedPermissions,
             'stats' => $stats,
         ]);
     }

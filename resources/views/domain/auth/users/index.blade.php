@@ -286,7 +286,7 @@
     </div>
 
     <!-- Create / Edit User Modal -->
-    <flux:modal wire:model.self="showingModal" class="max-w-xl">
+    <flux:modal wire:model.self="showingModal" class="max-w-2xl">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">
@@ -345,6 +345,49 @@
                     </div>
                     <flux:error name="form.role_ids" />
                 </div>
+
+                <!-- Direct permission exceptions -->
+                @if ($groupedPermissions->isNotEmpty())
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <flux:label class="font-medium">{{ __('Direct Permissions') }}</flux:label>
+                            <span class="text-xs text-zinc-500">
+                                {{ count($form->permission_ids) }} {{ __('selected') }}
+                            </span>
+                        </div>
+                        <flux:description class="mb-3 text-xs">
+                            {{ __('One-off grants without creating a dedicated role. Use for isolated exceptions.') }}
+                        </flux:description>
+
+                        <div class="space-y-3 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 max-h-56 overflow-y-auto bg-zinc-50/30 dark:bg-zinc-900/30">
+                            @foreach ($groupedPermissions as $group => $permissions)
+                                <div class="rounded-md border border-zinc-200/60 dark:border-zinc-800/60 p-2.5 bg-white/70 dark:bg-zinc-900/70">
+                                    <div class="flex items-center justify-between mb-1.5 pb-1 border-b border-zinc-100 dark:border-zinc-800/60">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
+                                            {{ ucfirst($group) }}
+                                        </span>
+                                        <span class="text-xs text-zinc-400">
+                                            {{ count(array_intersect($permissions->pluck('id')->all(), $form->permission_ids)) }} / {{ $permissions->count() }}
+                                        </span>
+                                    </div>
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                        @foreach ($permissions as $permission)
+                                            <div class="p-1 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800/40">
+                                                <flux:checkbox
+                                                    wire:model="form.permission_ids"
+                                                    value="{{ $permission->id }}"
+                                                    :label="$permission->name"
+                                                    :description="$permission->slug"
+                                                />
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endforeach
+                        </div>
+                        <flux:error name="form.permission_ids" />
+                    </div>
+                @endif
 
                 <!-- Department & Sector Assignment -->
                 @if ($availableDepartments->isNotEmpty())

@@ -320,7 +320,7 @@
                 <!-- Grouped Permissions -->
                 <div>
                     <div class="flex items-center justify-between mb-2">
-                        <flux:label class="font-medium">{{ __('Attached Permissions by Resource') }}</flux:label>
+                        <flux:label class="font-medium">{{ __('Attached Permissions by Group') }}</flux:label>
                         <span class="text-xs text-zinc-500">
                             {{ count($form->permission_ids) }} {{ __('selected') }}
                         </span>

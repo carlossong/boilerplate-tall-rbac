@@ -6,9 +6,12 @@ namespace App\Domain\Auth\Policies;
 
 use App\Domain\Auth\Models\Role;
 use App\Domain\Auth\Models\User;
+use App\Domain\Auth\Policies\Concerns\ChecksRecordAccess;
 
 class RolePolicy
 {
+    use ChecksRecordAccess;
+
     /**
      * Determine whether the user can view any models.
      */
@@ -42,11 +45,11 @@ class RolePolicy
             return false;
         }
 
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        return $user->can('roles.update') && $role->level <= $user->highestRoleLevel();
+        return $this->allowsAbilityThenRecord(
+            $user,
+            'roles.update',
+            fn (User $actor): bool => $role->level <= $actor->highestRoleLevel(),
+        );
     }
 
     /**
@@ -58,11 +61,11 @@ class RolePolicy
             return false;
         }
 
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        return $user->can('roles.delete') && $role->level <= $user->highestRoleLevel();
+        return $this->allowsAbilityThenRecord(
+            $user,
+            'roles.delete',
+            fn (User $actor): bool => $role->level <= $actor->highestRoleLevel(),
+        );
     }
 
     /**
@@ -70,11 +73,11 @@ class RolePolicy
      */
     public function restore(User $user, Role $role): bool
     {
-        if ($user->isSuperAdmin()) {
-            return true;
-        }
-
-        return $user->can('roles.delete') && $role->level <= $user->highestRoleLevel();
+        return $this->allowsAbilityThenRecord(
+            $user,
+            'roles.delete',
+            fn (User $actor): bool => $role->level <= $actor->highestRoleLevel(),
+        );
     }
 
     /**

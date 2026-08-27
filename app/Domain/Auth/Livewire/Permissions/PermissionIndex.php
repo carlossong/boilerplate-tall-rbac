@@ -26,7 +26,7 @@ class PermissionIndex extends Component
 
     public string $search = '';
 
-    public string $resourceFilter = '';
+    public string $groupFilter = '';
 
     public bool $showDeleted = false;
 
@@ -48,7 +48,7 @@ class PermissionIndex extends Component
         $this->resetPage();
     }
 
-    public function updatedResourceFilter(): void
+    public function updatedGroupFilter(): void
     {
         $this->resetPage();
     }
@@ -135,7 +135,7 @@ class PermissionIndex extends Component
 
     public function resetFilters(): void
     {
-        $this->reset(['search', 'resourceFilter', 'showDeleted']);
+        $this->reset(['search', 'groupFilter', 'showDeleted']);
         $this->resetPage();
     }
 
@@ -150,38 +150,33 @@ class PermissionIndex extends Component
         if (filled($this->search)) {
             $query->where(function ($q) {
                 $q->where('name', 'like', '%'.$this->search.'%')
-                    ->orWhere('slug', 'like', '%'.$this->search.'%');
+                    ->orWhere('slug', 'like', '%'.$this->search.'%')
+                    ->orWhere('group', 'like', '%'.$this->search.'%');
             });
         }
 
-        if (filled($this->resourceFilter)) {
-            $query->where('slug', 'like', $this->resourceFilter.'.%');
+        if (filled($this->groupFilter)) {
+            $query->where('group', $this->groupFilter);
         }
 
-        $permissions = $query->orderBy('slug')->paginate(15);
+        $permissions = $query->orderBy('group')->orderBy('slug')->paginate(15);
 
-        $resources = Permission::query()
-            ->pluck('slug')
-            ->map(function ($slug) {
-                $parts = explode('.', $slug);
-
-                return count($parts) > 1 ? $parts[0] : null;
-            })
-            ->filter()
-            ->unique()
-            ->sort()
-            ->values();
+        $groups = Permission::query()
+            ->where('group', '!=', '')
+            ->distinct()
+            ->orderBy('group')
+            ->pluck('group');
 
         $stats = [
             'total' => Permission::withTrashed()->count(),
             'active' => Permission::withoutTrashed()->count(),
-            'resources_count' => $resources->count(),
+            'groups_count' => $groups->count(),
             'trashed' => Permission::onlyTrashed()->count(),
         ];
 
         return view('domain.auth.permissions.index', [
             'permissions' => $permissions,
-            'resources' => $resources,
+            'groups' => $groups,
             'stats' => $stats,
         ]);
     }

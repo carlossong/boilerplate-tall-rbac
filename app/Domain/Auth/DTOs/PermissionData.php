@@ -10,6 +10,7 @@ final readonly class PermissionData
         public string $name,
         public string $slug,
         public ?string $description = null,
+        public ?string $group = null,
     ) {}
 
     /**
@@ -21,6 +22,7 @@ final readonly class PermissionData
             name: (string) ($data['name'] ?? ''),
             slug: (string) ($data['slug'] ?? ''),
             description: isset($data['description']) && filled($data['description']) ? (string) $data['description'] : null,
+            group: isset($data['group']) && filled($data['group']) ? (string) $data['group'] : null,
         );
     }
 }

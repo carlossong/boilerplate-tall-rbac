@@ -67,14 +67,14 @@
 
             <flux:card class="!p-6 bg-zinc-50/60 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
                 <div class="flex items-center justify-between">
-                    <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ __('Resources') }}</span>
+                    <span class="text-xs font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">{{ __('Groups') }}</span>
                     <div class="size-9 rounded-lg bg-amber-50 dark:bg-amber-950/40 flex items-center justify-center text-amber-600 dark:text-amber-400">
                         <flux:icon icon="folder" class="size-4" />
                     </div>
                 </div>
                 <div class="mt-3 flex items-baseline gap-2">
-                    <span class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{{ $stats['resources_count'] }}</span>
-                    <span class="text-xs text-amber-600 dark:text-amber-400">{{ __('categories') }}</span>
+                    <span class="text-3xl font-bold tracking-tight text-zinc-900 dark:text-zinc-50">{{ $stats['groups_count'] }}</span>
+                    <span class="text-xs text-amber-600 dark:text-amber-400">{{ __('modules') }}</span>
                 </div>
             </flux:card>
 
@@ -101,10 +101,10 @@
                     </div>
 
                     <div class="w-full sm:w-60">
-                        <flux:select wire:model.live="resourceFilter" :placeholder="__('All Resources')">
-                            <flux:select.option value="">{{ __('Resource: All') }}</flux:select.option>
-                            @foreach ($resources as $res)
-                                <flux:select.option value="{{ $res }}">{{ ucfirst($res) }}</flux:select.option>
+                        <flux:select wire:model.live="groupFilter" :placeholder="__('All Groups')">
+                            <flux:select.option value="">{{ __('Group: All') }}</flux:select.option>
+                            @foreach ($groups as $group)
+                                <flux:select.option value="{{ $group }}">{{ ucfirst($group) }}</flux:select.option>
                             @endforeach
                         </flux:select>
                     </div>
@@ -113,7 +113,7 @@
                 <div class="flex items-center gap-4 w-full md:w-auto justify-between md:justify-end">
                     <flux:checkbox wire:model.live="showDeleted" :label="__('Show Trashed')" />
 
-                    @if (filled($search) || filled($resourceFilter) || $showDeleted)
+                    @if (filled($search) || filled($groupFilter) || $showDeleted)
                         <flux:button size="sm" variant="ghost" icon="x-mark" wire:click="resetFilters">
                             {{ __('Reset') }}
                         </flux:button>
@@ -128,7 +128,7 @@
                 <flux:table.columns>
                     <flux:table.column class="ps-6! py-3.5! w-1/3">{{ __('Ability') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Slug (Gate Key)') }}</flux:table.column>
-                    <flux:table.column class="py-3.5!">{{ __('Resource') }}</flux:table.column>
+                    <flux:table.column class="py-3.5!">{{ __('Group') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Assigned Roles') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Status') }}</flux:table.column>
                     <flux:table.column align="center" class="pe-6! py-3.5! w-28 text-center">{{ __('Actions') }}</flux:table.column>
@@ -136,11 +136,6 @@
 
                 <flux:table.rows>
                     @forelse ($permissions as $permission)
-                        @php
-                            $parts = explode('.', $permission->slug);
-                            $resource = count($parts) > 1 ? $parts[0] : 'other';
-                            $action = count($parts) > 1 ? $parts[1] : $permission->slug;
-                        @endphp
                         <flux:table.row :key="$permission->id" class="hover:bg-zinc-50/60 dark:hover:bg-zinc-800/40 transition-colors">
                             <flux:table.cell class="ps-6! py-4!">
                                 <div class="grid leading-tight">
@@ -156,7 +151,7 @@
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
-                                <flux:badge size="sm" color="purple" inset="top bottom">{{ ucfirst($resource) }}</flux:badge>
+                                <flux:badge size="sm" color="purple" inset="top bottom">{{ ucfirst($permission->groupKey()) }}</flux:badge>
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
@@ -231,9 +226,9 @@
                                     </div>
                                     <flux:heading size="md">{{ __('No permissions found') }}</flux:heading>
                                     <flux:subheading class="max-w-sm mt-1">
-                                        {{ __('No gate abilities matched your search or resource filter.') }}
+                                        {{ __('No gate abilities matched your search or group filter.') }}
                                     </flux:subheading>
-                                    @if (filled($search) || filled($resourceFilter) || $showDeleted)
+                                    @if (filled($search) || filled($groupFilter) || $showDeleted)
                                         <div class="mt-4">
                                             <flux:button size="sm" variant="filled" wire:click="resetFilters">
                                                 {{ __('Clear all filters') }}
@@ -279,6 +274,13 @@
                         required
                     />
                 </div>
+
+                <flux:input
+                    wire:model="form.group"
+                    :label="__('Group / Module')"
+                    :placeholder="__('e.g. users, billing')"
+                    :description="__('Used only to group this ability in assignment UIs. Leave blank to use the slug prefix.')"
+                />
 
                 <flux:textarea wire:model="form.description" :label="__('Description')" :placeholder="__('Explain when this permission should be granted.')" rows="2" />
             </div>

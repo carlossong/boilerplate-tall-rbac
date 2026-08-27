@@ -29,6 +29,11 @@ class UserForm extends Form
     /**
      * @var array<string>
      */
+    public array $permission_ids = [];
+
+    /**
+     * @var array<string>
+     */
     public array $department_ids = [];
 
     /**
@@ -60,6 +65,8 @@ class UserForm extends Form
             'is_super_admin' => ['boolean'],
             'role_ids' => ['array'],
             'role_ids.*' => ['exists:roles,id'],
+            'permission_ids' => ['array'],
+            'permission_ids.*' => ['exists:permissions,id'],
             'department_ids' => ['array'],
             'department_ids.*' => ['exists:departments,id'],
             'department_roles' => ['array'],
@@ -81,6 +88,7 @@ class UserForm extends Form
         $this->password = '';
         $this->is_super_admin = (bool) $user->is_super_admin;
         $this->role_ids = $user->roles()->pluck('roles.id')->all();
+        $this->permission_ids = $user->permissions()->pluck('permissions.id')->all();
 
         $user->loadMissing('departments');
         $this->department_ids = $user->departments->pluck('id')->all();
@@ -120,6 +128,7 @@ class UserForm extends Form
             isSuperAdmin: $this->is_super_admin,
             roleIds: $this->role_ids,
             departmentAssignments: $departmentAssignments,
+            permissionIds: $this->permission_ids,
         );
     }
 }

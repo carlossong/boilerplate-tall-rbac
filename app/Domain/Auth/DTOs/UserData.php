@@ -9,6 +9,7 @@ final readonly class UserData
     /**
      * @param  array<string>  $roleIds
      * @param  array<int|string, mixed>  $departmentAssignments
+     * @param  array<string>  $permissionIds
      */
     public function __construct(
         public string $name,
@@ -17,6 +18,7 @@ final readonly class UserData
         public bool $isSuperAdmin = false,
         public array $roleIds = [],
         public array $departmentAssignments = [],
+        public array $permissionIds = [],
     ) {}
 
     /**
@@ -31,6 +33,7 @@ final readonly class UserData
             isSuperAdmin: (bool) ($data['is_super_admin'] ?? false),
             roleIds: (array) ($data['role_ids'] ?? []),
             departmentAssignments: (array) ($data['departments'] ?? $data['department_assignments'] ?? []),
+            permissionIds: (array) ($data['permission_ids'] ?? []),
         );
     }
 }

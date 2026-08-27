@@ -47,6 +47,22 @@ class PolicyTest extends TestCase
         $this->assertFalse($user->can('users.delete'));
     }
 
+    public function test_record_authorization_stays_in_the_policy_not_the_global_gate(): void
+    {
+        $updatePermission = Permission::factory()->create(['slug' => 'users.update']);
+        $actorRole = Role::factory()->create(['level' => 20]);
+        $actorRole->permissions()->attach($updatePermission);
+
+        $actor = User::factory()->create();
+        $actor->roles()->attach($actorRole);
+
+        $higher = User::factory()->create();
+        $higher->roles()->attach(Role::factory()->create(['level' => 80]));
+
+        $this->assertTrue($actor->can('users.update'));
+        $this->assertFalse($actor->can('update', $higher));
+    }
+
     public function test_user_cannot_delete_themselves(): void
     {
         $user = User::factory()->create();
