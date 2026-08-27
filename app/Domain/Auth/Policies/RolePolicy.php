@@ -42,16 +42,7 @@ class RolePolicy
             return true;
         }
 
-        if (! $user->can('roles.update')) {
-            return false;
-        }
-
-        // Não pode editar role com nível superior ao seu próprio maior nível
-        if ($role->level > $user->highestRoleLevel()) {
-            return false;
-        }
-
-        return true;
+        return $user->can('roles.update') && $role->level <= $user->highestRoleLevel();
     }
 
     /**
@@ -59,7 +50,7 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
-        // Impede a exclusão das roles estruturais essenciais
+        // Impede a exclusão das roles estruturais protegidas
         if (in_array($role->slug, ['admin', 'super-admin'], true)) {
             return false;
         }
@@ -68,16 +59,7 @@ class RolePolicy
             return true;
         }
 
-        if (! $user->can('roles.delete')) {
-            return false;
-        }
-
-        // Não pode excluir role com nível superior ao seu próprio
-        if ($role->level > $user->highestRoleLevel()) {
-            return false;
-        }
-
-        return true;
+        return $user->can('roles.delete') && $role->level <= $user->highestRoleLevel();
     }
 
     /**
@@ -89,11 +71,7 @@ class RolePolicy
             return true;
         }
 
-        if (! $user->can('roles.delete')) {
-            return false;
-        }
-
-        return $role->level <= $user->highestRoleLevel();
+        return $user->can('roles.delete') && $role->level <= $user->highestRoleLevel();
     }
 
     /**

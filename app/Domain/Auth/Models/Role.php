@@ -4,20 +4,80 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\Models;
 
+use App\Domain\Auth\Enums\RoleLevel;
 use Database\Factories\RoleFactory;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property string $id
+ * @property string $name
+ * @property string $slug
+ * @property int $level
+ * @property string|null $description
+ * @property Collection<int, Permission> $permissions
+ */
 class Role extends Model
 {
     /** @use HasFactory<RoleFactory> */
     use HasFactory, HasUuids, SoftDeletes;
 
+    public const int LEVEL_SUPER_ADMIN = 100;
+
+    public const int LEVEL_ADMIN = 80;
+
+    public const int LEVEL_MANAGER = 50;
+
+    public const int LEVEL_SUPERVISOR = 30;
+
+    public const int LEVEL_OPERATOR = 20;
+
+    public const int LEVEL_VIEWER = 10;
+
+    /**
+     * @var Collection<string, Role>|null
+     */
+    protected static ?Collection $cachedRoles = null;
+
     protected $guarded = [];
+
+    protected static function booted(): void
+    {
+        static::saved(fn () => static::flushCache());
+        static::deleted(fn () => static::flushCache());
+    }
+
+    /**
+     * Get all active roles with their permissions memoized in-memory.
+     *
+     * @return Collection<string, Role>
+     */
+    public static function getCachedRoles(): Collection
+    {
+        if (static::$cachedRoles === null) {
+            /** @var Collection<string, Role> $roles */
+            $roles = static::with('permissions')
+                ->get()
+                ->keyBy('id');
+
+            static::$cachedRoles = $roles;
+        }
+
+        return static::$cachedRoles;
+    }
+
+    /**
+     * Flush the in-memory memoized roles.
+     */
+    public static function flushCache(): void
+    {
+        static::$cachedRoles = null;
+    }
 
     /**
      * @return array<string, string>
@@ -35,6 +95,27 @@ class Role extends Model
     protected static function newFactory(): RoleFactory
     {
         return RoleFactory::new();
+    }
+
+    /**
+     * Get the strongly typed RoleLevel enum if matching a canonical tier.
+     */
+    public function levelEnum(): ?RoleLevel
+    {
+        return RoleLevel::tryFrom($this->level);
+    }
+
+    /**
+     * Determine the badge color according to level hierarchy.
+     */
+    public function levelBadgeColor(): string
+    {
+        return $this->levelEnum()?->color() ?? match (true) {
+            $this->level >= 80 => 'emerald',
+            $this->level >= 50 => 'indigo',
+            $this->level >= 20 => 'amber',
+            default => 'zinc',
+        };
     }
 
     /**

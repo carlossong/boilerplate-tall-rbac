@@ -154,16 +154,11 @@
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
-                                @if ($role->level >= 80)
-                                    <flux:badge size="sm" color="purple" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
-                                @elseif ($role->level >= 50)
-                                    <flux:badge size="sm" color="sky" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
-                                @elseif ($role->level >= 30)
-                                    <flux:badge size="sm" color="amber" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
-                                @else
-                                    <flux:badge size="sm" color="zinc" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
-                                @endif
+                                <flux:badge size="sm" :color="$role->levelBadgeColor()" inset="top bottom">
+                                    Lvl {{ $role->level }}
+                                </flux:badge>
                             </flux:table.cell>
+
 
                             <flux:table.cell class="py-4!">
                                 <div class="flex flex-wrap gap-1 max-w-xs">

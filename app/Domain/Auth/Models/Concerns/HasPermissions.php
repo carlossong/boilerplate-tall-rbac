@@ -19,6 +19,8 @@ trait HasPermissions
      */
     protected array $cachedDepartmentPermissionSlugs = [];
 
+    protected ?int $cachedHighestRoleLevel = null;
+
     /**
      * Determine if the user has the given role(s), optionally scoped to a department.
      *
@@ -34,37 +36,31 @@ trait HasPermissions
             return $this->hasRoleInDepartment($roles, $department);
         }
 
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
+        $rolesList = is_string($roles) ? [$roles] : $roles;
 
         if (! $this->relationLoaded('roles')) {
             $this->loadMissing('roles');
         }
 
-        if ($this->roles->pluck('slug')->intersect($roles)->isNotEmpty()) {
+        if ($this->roles->pluck('slug')->intersect($rolesList)->isNotEmpty()) {
             return true;
         }
 
-        // Also check if any departmental role matches
+        // Also check if any departmental assigned role matches
         if (! $this->relationLoaded('departments')) {
             $this->loadMissing('departments');
         }
 
-        $departmentRoleIds = $this->departments
-            ->pluck('pivot.role_id')
-            ->filter()
-            ->unique()
-            ->all();
+        $allCachedRoles = Role::getCachedRoles();
 
-        if (! empty($departmentRoleIds)) {
-            $matchingRoles = Role::query()
-                ->whereIn('id', $departmentRoleIds)
-                ->whereIn('slug', $roles)
-                ->exists();
-
-            if ($matchingRoles) {
-                return true;
+        foreach ($this->departments as $dept) {
+            if ($dept->pivot && ! empty($dept->pivot->role_id)) {
+                $roleId = $dept->pivot->role_id;
+                if (isset($allCachedRoles[$roleId])) {
+                    if (in_array($allCachedRoles[$roleId]->slug, $rolesList, true)) {
+                        return true;
+                    }
+                }
             }
         }
 
@@ -82,16 +78,14 @@ trait HasPermissions
             return true;
         }
 
-        if (is_string($roles)) {
-            $roles = [$roles];
-        }
+        $rolesList = is_string($roles) ? [$roles] : $roles;
 
-        // Global roles (like admin) apply across departments
+        // Global roles apply across all departments
         if (! $this->relationLoaded('roles')) {
             $this->loadMissing('roles');
         }
 
-        if ($this->roles->pluck('slug')->intersect($roles)->isNotEmpty()) {
+        if ($this->roles->pluck('slug')->intersect($rolesList)->isNotEmpty()) {
             return true;
         }
 
@@ -102,15 +96,13 @@ trait HasPermissions
         }
 
         $dept = $this->departments->firstWhere('id', $departmentId);
-        $pivot = $dept?->pivot;
-        if (! $dept || ! $pivot || empty($pivot->role_id)) {
+        if (! $dept || ! $dept->pivot || empty($dept->pivot->role_id)) {
             return false;
         }
 
-        /** @var Role|null $role */
-        $role = Role::query()->where('id', $pivot->role_id)->first();
+        $cachedRole = Role::getCachedRoles()->get($dept->pivot->role_id);
 
-        return $role !== null && in_array($role->slug, $roles, true);
+        return $cachedRole !== null && in_array($cachedRole->slug, $rolesList, true);
     }
 
     /**
@@ -137,25 +129,20 @@ trait HasPermissions
                 ->flatMap(fn ($role) => $role->permissions)
                 ->pluck('slug');
 
-            // Include permissions from departmental roles
+            // Include permissions from departmental roles in-memory
             if (! $this->relationLoaded('departments')) {
                 $this->loadMissing('departments');
             }
 
-            $departmentRoleIds = $this->departments
-                ->pluck('pivot.role_id')
-                ->filter()
-                ->unique()
-                ->all();
+            $allCachedRoles = Role::getCachedRoles();
 
-            if (! empty($departmentRoleIds)) {
-                $deptPermissions = Role::with('permissions')
-                    ->whereIn('id', $departmentRoleIds)
-                    ->get()
-                    ->flatMap(fn ($role) => $role->permissions)
-                    ->pluck('slug');
-
-                $slugs = $slugs->merge($deptPermissions);
+            foreach ($this->departments as $dept) {
+                if ($dept->pivot && ! empty($dept->pivot->role_id)) {
+                    $roleId = $dept->pivot->role_id;
+                    if (isset($allCachedRoles[$roleId])) {
+                        $slugs = $slugs->merge($allCachedRoles[$roleId]->permissions->pluck('slug'));
+                    }
+                }
             }
 
             $this->cachedPermissionSlugs = $slugs->unique()->all();
@@ -179,7 +166,7 @@ trait HasPermissions
             return in_array($permissionSlug, $this->cachedDepartmentPermissionSlugs[$departmentId], true);
         }
 
-        // Global permissions also grant access inside any department
+        // Global permissions grant access inside all departments
         if (! $this->relationLoaded('roles')) {
             $this->loadMissing('roles.permissions');
         } else {
@@ -195,12 +182,10 @@ trait HasPermissions
         }
 
         $dept = $this->departments->firstWhere('id', $departmentId);
-        $pivot = $dept?->pivot;
-        if ($dept && $pivot && ! empty($pivot->role_id)) {
-            /** @var Role|null $role */
-            $role = Role::with('permissions')->where('id', $pivot->role_id)->first();
-            if ($role) {
-                $slugs = $slugs->merge($role->permissions->pluck('slug'));
+        if ($dept && $dept->pivot && ! empty($dept->pivot->role_id)) {
+            $cachedRole = Role::getCachedRoles()->get($dept->pivot->role_id);
+            if ($cachedRole) {
+                $slugs = $slugs->merge($cachedRole->permissions->pluck('slug'));
             }
         }
 
@@ -211,11 +196,16 @@ trait HasPermissions
 
     /**
      * Calculate the highest role level of the user (globally or within a department).
+     * Memoized per instance to eliminate repeated queries in loops and policies.
      */
     public function highestRoleLevel(Department|string|null $department = null): int
     {
         if ($this->isSuperAdmin()) {
-            return 100;
+            return Role::LEVEL_SUPER_ADMIN;
+        }
+
+        if ($department === null && $this->cachedHighestRoleLevel !== null) {
+            return $this->cachedHighestRoleLevel;
         }
 
         if (! $this->relationLoaded('roles')) {
@@ -225,40 +215,43 @@ trait HasPermissions
         $levels = $this->roles->pluck('level');
 
         if ($department === null) {
-            // Consider all assigned roles, including department-specific roles
             if (! $this->relationLoaded('departments')) {
                 $this->loadMissing('departments');
             }
 
-            $deptRoleIds = $this->departments
-                ->pluck('pivot.role_id')
-                ->filter()
-                ->unique()
-                ->all();
+            $allCachedRoles = Role::getCachedRoles();
 
-            if (! empty($deptRoleIds)) {
-                $deptLevels = Role::query()->whereIn('id', $deptRoleIds)->pluck('level');
-                $levels = $levels->merge($deptLevels);
-            }
-        } else {
-            $departmentId = $department instanceof Department ? $department->id : $department;
-
-            if (! $this->relationLoaded('departments')) {
-                $this->loadMissing('departments');
-            }
-
-            $dept = $this->departments->firstWhere('id', $departmentId);
-            $pivot = $dept?->pivot;
-            if ($dept && $pivot && ! empty($pivot->role_id)) {
-                /** @var Role|null $role */
-                $role = Role::query()->where('id', $pivot->role_id)->first();
-                if ($role) {
-                    $levels->push($role->level);
+            foreach ($this->departments as $dept) {
+                if ($dept->pivot && ! empty($dept->pivot->role_id)) {
+                    $roleId = $dept->pivot->role_id;
+                    if (isset($allCachedRoles[$roleId])) {
+                        $levels->push($allCachedRoles[$roleId]->level);
+                    }
                 }
+            }
+
+            $highest = (int) ($levels->max() ?? 0);
+            $this->cachedHighestRoleLevel = $highest;
+
+            return $highest;
+        }
+
+        $departmentId = $department instanceof Department ? $department->id : $department;
+
+        if (! $this->relationLoaded('departments')) {
+            $this->loadMissing('departments');
+        }
+
+        $dept = $this->departments->firstWhere('id', $departmentId);
+        if ($dept && $dept->pivot && ! empty($dept->pivot->role_id)) {
+            $cachedRole = Role::getCachedRoles()->get($dept->pivot->role_id);
+            if ($cachedRole) {
+                $levels->push($cachedRole->level);
             }
         }
 
         return (int) ($levels->max() ?? 0);
+
     }
 
     /**
@@ -285,11 +278,12 @@ trait HasPermissions
     }
 
     /**
-     * Clear cached permission slugs for the instance.
+     * Clear cached permission slugs and computed levels for the instance.
      */
     public function flushCachedPermissions(): void
     {
         $this->cachedPermissionSlugs = null;
         $this->cachedDepartmentPermissionSlugs = [];
+        $this->cachedHighestRoleLevel = null;
     }
 }

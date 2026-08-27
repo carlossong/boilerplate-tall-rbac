@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $slug
  * @property string|null $description
  * @property bool $is_active
- * @property object|null $pivot
+ * @property object{id?: string, role_id?: string|null, is_primary?: bool}|null $pivot
  */
 class Department extends Model
 {

@@ -142,7 +142,8 @@ class DepartmentIndex extends Component
     public function render(): View
     {
         $query = Department::query()
-            ->with(['roles', 'users'])
+            ->with('roles')
+            ->withCount('users')
             ->when($this->showDeleted, fn ($q) => $q->onlyTrashed(), fn ($q) => $q->withoutTrashed())
             ->when(
                 filled($this->search),
@@ -158,7 +159,7 @@ class DepartmentIndex extends Component
 
         $stats = [
             'total' => Department::count(),
-            'active' => Department::where('is_active', true)->count(),
+            'active' => Department::active()->count(),
             'archived' => Department::onlyTrashed()->count(),
         ];
 

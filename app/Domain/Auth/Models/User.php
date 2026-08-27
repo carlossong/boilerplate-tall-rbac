@@ -8,6 +8,7 @@ use App\Domain\Auth\Models\Concerns\HasPermissions;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
@@ -34,6 +35,8 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
  * @property Carbon|null $created_at
  * @property Carbon|null $updated_at
  * @property Carbon|null $deleted_at
+ * @property Collection<int, Role> $roles
+ * @property Collection<int, Department> $departments
  */
 #[Fillable(['name', 'email', 'password', 'is_super_admin'])]
 #[Hidden(['password', 'two_factor_secret', 'two_factor_recovery_codes', 'remember_token'])]
@@ -99,5 +102,33 @@ class User extends Authenticatable implements PasskeyUser
         return $this->belongsToMany(Department::class, 'department_user')
             ->withPivot(['id', 'role_id', 'is_primary'])
             ->withTimestamps();
+    }
+
+    /**
+     * Synchronize the user's departmental assignments with pivot metadata.
+     *
+     * @param  array<int|string, array<string, mixed>|string>  $assignments
+     */
+    public function syncDepartments(array $assignments): void
+    {
+        $syncData = [];
+        foreach ($assignments as $item) {
+            if (is_string($item)) {
+                $syncData[$item] = [
+                    'id' => (string) Str::uuid(),
+                    'role_id' => null,
+                    'is_primary' => empty($syncData),
+                ];
+            } elseif (isset($item['department_id'])) {
+                $syncData[$item['department_id']] = [
+                    'id' => (string) Str::uuid(),
+                    'role_id' => ! empty($item['role_id']) ? $item['role_id'] : null,
+                    'is_primary' => (bool) ($item['is_primary'] ?? false),
+                ];
+            }
+        }
+
+        $this->departments()->sync($syncData);
+        $this->flushCachedPermissions();
     }
 }

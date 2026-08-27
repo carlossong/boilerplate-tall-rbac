@@ -45,17 +45,12 @@ class UserPolicy
             return false;
         }
 
-        // Não pode atualizar um Super Admin se o autor não for Super Admin
-        if ($model->isSuperAdmin()) {
-            return false;
+        // Permite edição do próprio perfil se tiver permissão users.update
+        if ($user->id === $model->id) {
+            return true;
         }
 
-        // Se estiver editando outro usuário, exige nível hierárquico estritamente superior
-        if ($user->id !== $model->id && $user->highestRoleLevel() <= $model->highestRoleLevel()) {
-            return false;
-        }
-
-        return true;
+        return $this->canManageUserHierarchy($user, $model);
     }
 
     /**
@@ -68,11 +63,6 @@ class UserPolicy
             return false;
         }
 
-        // Super Admin não pode ser excluído por usuário comum
-        if ($model->isSuperAdmin()) {
-            return false;
-        }
-
         if ($user->isSuperAdmin()) {
             return true;
         }
@@ -81,8 +71,7 @@ class UserPolicy
             return false;
         }
 
-        // Exige nível hierárquico estritamente superior para excluir outro usuário
-        return $user->highestRoleLevel() > $model->highestRoleLevel();
+        return $this->canManageUserHierarchy($user, $model);
     }
 
     /**
@@ -90,10 +79,6 @@ class UserPolicy
      */
     public function restore(User $user, User $model): bool
     {
-        if ($model->isSuperAdmin() && ! $user->isSuperAdmin()) {
-            return false;
-        }
-
         if ($user->isSuperAdmin()) {
             return true;
         }
@@ -102,7 +87,7 @@ class UserPolicy
             return false;
         }
 
-        return $user->highestRoleLevel() > $model->highestRoleLevel();
+        return $this->canManageUserHierarchy($user, $model);
     }
 
     /**
@@ -111,5 +96,17 @@ class UserPolicy
     public function forceDelete(User $user, User $model): bool
     {
         return $this->delete($user, $model);
+    }
+
+    /**
+     * Check if the actor has strictly higher hierarchical authority over the target user.
+     */
+    private function canManageUserHierarchy(User $user, User $target): bool
+    {
+        if ($target->isSuperAdmin()) {
+            return false;
+        }
+
+        return $user->highestRoleLevel() > $target->highestRoleLevel();
     }
 }

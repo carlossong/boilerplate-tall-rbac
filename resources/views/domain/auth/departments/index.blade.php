@@ -151,11 +151,12 @@
                                 <div class="flex items-center gap-1.5">
                                     <flux:icon icon="users" class="size-3.5 text-zinc-400" />
                                     <span class="text-sm text-zinc-700 dark:text-zinc-300">
-                                        {{ $department->users->count() }}
+                                        {{ $department->users_count ?? 0 }}
                                     </span>
                                     <span class="text-xs text-zinc-400">{{ __('members') }}</span>
                                 </div>
                             </flux:table.cell>
+
 
                             <flux:table.cell class="py-4!">
                                 @if ($department->trashed())
