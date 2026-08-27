@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Models;
 
 use App\Domain\Auth\Models\Concerns\HasPermissions;
+use App\Domain\Auth\Models\Pivots\DepartmentUser;
+use App\Domain\Auth\Models\Pivots\RoleUser;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
@@ -86,20 +88,22 @@ class User extends Authenticatable implements PasskeyUser
     }
 
     /**
-     * @return BelongsToMany<Role, $this>
+     * @return BelongsToMany<Role, $this, RoleUser>
      */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'role_user')
+            ->using(RoleUser::class)
             ->withTimestamps();
     }
 
     /**
-     * @return BelongsToMany<Department, $this>
+     * @return BelongsToMany<Department, $this, DepartmentUser>
      */
     public function departments(): BelongsToMany
     {
         return $this->belongsToMany(Department::class, 'department_user')
+            ->using(DepartmentUser::class)
             ->withPivot(['id', 'role_id', 'is_primary'])
             ->withTimestamps();
     }

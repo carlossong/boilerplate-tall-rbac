@@ -291,7 +291,8 @@ trait HasPermissions
             || $this->hasPermissionTo('users.view')
             || $this->hasPermissionTo('roles.view')
             || $this->hasPermissionTo('departments.view')
-            || $this->hasPermissionTo('permissions.view');
+            || $this->hasPermissionTo('permissions.view')
+            || $this->hasPermissionTo('audit-logs.view');
     }
 
     /**

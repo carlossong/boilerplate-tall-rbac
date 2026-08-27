@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\Models;
 
+use App\Domain\Auth\Models\Pivots\PermissionRole;
 use Database\Factories\PermissionFactory;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -51,11 +52,12 @@ class Permission extends Model
     }
 
     /**
-     * @return BelongsToMany<Role, $this>
+     * @return BelongsToMany<Role, $this, PermissionRole>
      */
     public function roles(): BelongsToMany
     {
         return $this->belongsToMany(Role::class, 'permission_role')
+            ->using(PermissionRole::class)
             ->withTimestamps();
     }
 }

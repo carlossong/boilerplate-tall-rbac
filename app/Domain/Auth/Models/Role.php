@@ -5,6 +5,8 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Models;
 
 use App\Domain\Auth\Enums\RoleLevel;
+use App\Domain\Auth\Models\Pivots\PermissionRole;
+use App\Domain\Auth\Models\Pivots\RoleUser;
 use Database\Factories\RoleFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
@@ -147,11 +149,12 @@ class Role extends Model
     }
 
     /**
-     * @return BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this, RoleUser>
      */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'role_user')
+            ->using(RoleUser::class)
             ->withTimestamps();
     }
 
@@ -165,11 +168,12 @@ class Role extends Model
     }
 
     /**
-     * @return BelongsToMany<Permission, $this>
+     * @return BelongsToMany<Permission, $this, PermissionRole>
      */
     public function permissions(): BelongsToMany
     {
         return $this->belongsToMany(Permission::class, 'permission_role')
+            ->using(PermissionRole::class)
             ->withTimestamps();
     }
 }

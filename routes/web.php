@@ -2,6 +2,7 @@
 
 declare(strict_types=1);
 
+use App\Domain\Auth\Livewire\AuditLogs\PermissionAuditLogIndex;
 use App\Domain\Auth\Livewire\Departments\DepartmentIndex;
 use App\Domain\Auth\Livewire\Permissions\PermissionIndex;
 use App\Domain\Auth\Livewire\Roles\RoleIndex;
@@ -18,6 +19,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('departments', DepartmentIndex::class)->name('departments.index');
         Route::get('roles', RoleIndex::class)->name('roles.index');
         Route::get('permissions', PermissionIndex::class)->name('permissions.index');
+        Route::get('audit-logs', PermissionAuditLogIndex::class)->name('audit-logs.index');
     });
 });
 

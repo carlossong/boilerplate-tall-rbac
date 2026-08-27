@@ -44,6 +44,9 @@ class RolePermissionSeeder extends Seeder
             ['name' => 'Create Permissions', 'slug' => 'permissions.create', 'description' => 'Allows registering new custom permission slugs.'],
             ['name' => 'Update Permissions', 'slug' => 'permissions.update', 'description' => 'Allows updating permission names and descriptions.'],
             ['name' => 'Delete Permissions', 'slug' => 'permissions.delete', 'description' => 'Allows deleting permission abilities.'],
+
+            // Audit
+            ['name' => 'View Audit Logs', 'slug' => 'audit-logs.view', 'description' => 'Allows viewing who assigned or revoked roles and permissions.'],
         ];
 
         $createdPermissions = [];

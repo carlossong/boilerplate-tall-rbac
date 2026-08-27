@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\Models;
 
+use App\Domain\Auth\Models\Pivots\DepartmentUser;
 use Database\Factories\DepartmentFactory;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
@@ -55,11 +56,12 @@ class Department extends Model
     }
 
     /**
-     * @return BelongsToMany<User, $this>
+     * @return BelongsToMany<User, $this, DepartmentUser>
      */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'department_user')
+            ->using(DepartmentUser::class)
             ->withPivot(['id', 'role_id', 'is_primary'])
             ->withTimestamps();
     }

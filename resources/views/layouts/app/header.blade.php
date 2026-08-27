@@ -34,6 +34,11 @@
                         {{ __('Permissions') }}
                     </flux:navbar.item>
                 @endcan
+                @can('audit-logs.view')
+                    <flux:navbar.item icon="clipboard-document-list" :href="route('admin.audit-logs.index')" :current="request()->routeIs('admin.audit-logs.*')" wire:navigate>
+                        {{ __('Audit Logs') }}
+                    </flux:navbar.item>
+                @endcan
             </flux:navbar>
 
             <flux:spacer />
@@ -79,7 +84,7 @@
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                @if (auth()->user()?->can('users.view') || auth()->user()?->can('departments.view') || auth()->user()?->can('roles.view') || auth()->user()?->can('permissions.view'))
+                @if (auth()->user()?->can('users.view') || auth()->user()?->can('departments.view') || auth()->user()?->can('roles.view') || auth()->user()?->can('permissions.view') || auth()->user()?->can('audit-logs.view'))
                     <flux:sidebar.group :heading="__('Administration')" class="grid">
                         @can('users.view')
                             <flux:sidebar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
@@ -99,6 +104,11 @@
                         @can('permissions.view')
                             <flux:sidebar.item icon="key" :href="route('admin.permissions.index')" :current="request()->routeIs('admin.permissions.*')" wire:navigate>
                                 {{ __('Permissions') }}
+                            </flux:sidebar.item>
+                        @endcan
+                        @can('audit-logs.view')
+                            <flux:sidebar.item icon="clipboard-document-list" :href="route('admin.audit-logs.index')" :current="request()->routeIs('admin.audit-logs.*')" wire:navigate>
+                                {{ __('Audit Logs') }}
                             </flux:sidebar.item>
                         @endcan
                     </flux:sidebar.group>
