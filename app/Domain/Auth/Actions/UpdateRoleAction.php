@@ -25,7 +25,6 @@ final readonly class UpdateRoleAction
                 'description' => $data->description,
             ]);
 
-            $role->permissions()->sync($data->permissionIds);
             $role->departments()->sync($data->departmentIds);
 
             return $role;

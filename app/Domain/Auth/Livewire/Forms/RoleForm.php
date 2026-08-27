@@ -24,11 +24,6 @@ class RoleForm extends Form
     /**
      * @var array<string>
      */
-    public array $permission_ids = [];
-
-    /**
-     * @var array<string>
-     */
     public array $department_ids = [];
 
     /**
@@ -46,8 +41,6 @@ class RoleForm extends Form
             ],
             'level' => ['required', 'integer', 'min:1', 'max:100'],
             'description' => ['nullable', 'string', 'max:1000'],
-            'permission_ids' => ['array'],
-            'permission_ids.*' => ['exists:permissions,id'],
             'department_ids' => ['array'],
             'department_ids.*' => ['exists:departments,id'],
         ];
@@ -67,7 +60,6 @@ class RoleForm extends Form
         $this->slug = $role->slug;
         $this->level = $role->level ?? 10;
         $this->description = $role->description ?? '';
-        $this->permission_ids = $role->permissions()->pluck('permissions.id')->all();
         $this->department_ids = $role->departments()->pluck('departments.id')->all();
     }
 
@@ -78,7 +70,6 @@ class RoleForm extends Form
             slug: $this->slug,
             level: (int) $this->level,
             description: filled($this->description) ? $this->description : null,
-            permissionIds: $this->permission_ids,
             departmentIds: $this->department_ids,
         );
     }

@@ -95,16 +95,24 @@ class Role extends Model
     }
 
     /**
+     * Badge color for a numeric level, including custom values between canonical tiers.
+     */
+    public static function badgeColorForLevel(int $level): string
+    {
+        return RoleLevel::tryFrom($level)?->color() ?? match (true) {
+            $level >= 80 => 'emerald',
+            $level >= 50 => 'indigo',
+            $level >= 20 => 'amber',
+            default => 'zinc',
+        };
+    }
+
+    /**
      * Determine the badge color according to level hierarchy.
      */
     public function levelBadgeColor(): string
     {
-        return $this->levelEnum()?->color() ?? match (true) {
-            $this->level >= 80 => 'emerald',
-            $this->level >= 50 => 'indigo',
-            $this->level >= 20 => 'amber',
-            default => 'zinc',
-        };
+        return self::badgeColorForLevel($this->level);
     }
 
     /**

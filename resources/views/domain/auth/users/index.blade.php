@@ -150,10 +150,10 @@
                                     <div class="grid leading-tight min-w-0">
                                         <div class="flex items-center gap-2 flex-wrap">
                                             <span class="font-medium text-zinc-900 dark:text-zinc-100 truncate">{{ $user->name }}</span>
-                                            @if ($user->is_super_admin)
+                                            @if ($user->isSuperAdmin())
                                                 <flux:badge size="sm" color="amber" inset="top bottom" icon="shield-check">{{ __('Super Admin') }}</flux:badge>
                                             @endif
-                                            <flux:badge size="sm" color="zinc" class="font-mono text-xs">Lvl {{ $user->highestRoleLevel() }}</flux:badge>
+                                            <x-auth.level-badge :level="$user->highestRoleLevel()" />
                                         </div>
                                         <span class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ $user->email }}</span>
                                     </div>
@@ -163,9 +163,12 @@
                             <flux:table.cell class="py-4!">
                                 <div class="flex flex-wrap gap-1.5 max-w-xs">
                                     @forelse ($user->roles as $role)
-                                        <flux:badge size="sm" :color="$role->slug === 'admin' ? 'purple' : 'zinc'">
-                                            {{ $role->name }} <span class="text-xs opacity-70">({{ $role->level }})</span>
-                                        </flux:badge>
+                                        <div class="inline-flex items-center gap-1">
+                                            <flux:badge size="sm" :color="$role->slug === 'admin' ? 'purple' : 'zinc'">
+                                                {{ $role->name }}
+                                            </flux:badge>
+                                            <x-auth.level-badge :level="$role->level" />
+                                        </div>
                                     @empty
                                         <span class="text-xs italic text-zinc-400 dark:text-zinc-500">{{ __('No global roles') }}</span>
                                     @endforelse
@@ -175,16 +178,19 @@
                             <flux:table.cell class="py-4!">
                                 <div class="flex flex-wrap gap-1.5 max-w-xs">
                                     @forelse ($user->departments as $dept)
-                                        <flux:badge size="sm" :color="$dept->pivot->is_primary ? 'sky' : 'zinc'" inset="top bottom">
-                                            <flux:icon icon="building-office-2" class="size-3 mr-1 inline" />
-                                            {{ $dept->name }}
-                                            @if ($dept->pivot->role_id)
-                                                @php $dRole = $allRoles->firstWhere('id', $dept->pivot->role_id); @endphp
-                                                @if ($dRole)
-                                                    <span class="text-xs font-semibold opacity-80">({{ $dRole->name }})</span>
+                                        @php $sectorRole = $dept->pivot->role_id ? $allRoles->firstWhere('id', $dept->pivot->role_id) : null; @endphp
+                                        <div class="inline-flex items-center gap-1">
+                                            <flux:badge size="sm" :color="$dept->pivot->is_primary ? 'sky' : 'zinc'" inset="top bottom">
+                                                <flux:icon icon="building-office-2" class="size-3 mr-1 inline" />
+                                                {{ $dept->name }}
+                                                @if ($sectorRole)
+                                                    <span class="text-xs font-semibold opacity-80">({{ $sectorRole->name }})</span>
                                                 @endif
+                                            </flux:badge>
+                                            @if ($sectorRole)
+                                                <x-auth.level-badge :level="$sectorRole->level" />
                                             @endif
-                                        </flux:badge>
+                                        </div>
                                     @empty
                                         <span class="text-xs italic text-zinc-400 dark:text-zinc-500">{{ __('None') }}</span>
                                     @endforelse
@@ -215,7 +221,7 @@
                                         $canRestore = $user->trashed() && auth()->user()?->can('restore', $user);
                                         $canUpdate = ! $user->trashed() && auth()->user()?->can('update', $user);
                                         $isSelf = auth()->id() === $user->id;
-                                        $isLastActiveSuperAdmin = $user->is_super_admin && \App\Domain\Auth\Models\User::withoutTrashed()->where('is_super_admin', true)->count() <= 1;
+                                        $isLastActiveSuperAdmin = $user->isSuperAdmin() && \App\Domain\Auth\Models\User::withoutTrashed()->where('is_super_admin', true)->count() <= 1;
                                         $canDelete = ! $user->trashed() && ! $isSelf && ! $isLastActiveSuperAdmin && auth()->user()?->can('delete', $user);
                                     @endphp
 
@@ -314,7 +320,7 @@
                 />
 
                 <!-- Super Admin Privileges Callout -->
-                @if (auth()->user()?->is_super_admin)
+                @if (auth()->user() instanceof \App\Domain\Auth\Models\User && auth()->user()->isSuperAdmin())
                     <div class="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 dark:border-amber-900/50 dark:bg-amber-950/20">
                         <flux:checkbox
                             wire:model="form.is_super_admin"
@@ -329,13 +335,14 @@
                     <flux:label class="mb-2 block font-medium">{{ __('Assign Roles') }}</flux:label>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 border border-zinc-200 dark:border-zinc-800 rounded-lg p-3 max-h-56 overflow-y-auto bg-zinc-50/30 dark:bg-zinc-900/30">
                         @forelse ($allRoles as $role)
-                            <div class="flex items-start gap-2.5 p-2 rounded-md hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors">
+                            <div class="flex items-start justify-between gap-2 p-2 rounded-md hover:bg-zinc-100/60 dark:hover:bg-zinc-800/60 transition-colors">
                                 <flux:checkbox
                                     wire:model="form.role_ids"
                                     value="{{ $role->id }}"
                                     :label="$role->name"
                                     :description="$role->description"
                                 />
+                                <x-auth.level-badge :level="$role->level" class="shrink-0 mt-0.5" />
                             </div>
                         @empty
                             <div class="col-span-2 text-center py-4 text-xs text-zinc-500">

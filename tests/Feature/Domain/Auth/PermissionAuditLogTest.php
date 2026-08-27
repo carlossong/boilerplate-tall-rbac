@@ -6,7 +6,6 @@ namespace Tests\Feature\Domain\Auth;
 
 use App\Domain\Auth\Actions\CreateRoleAction;
 use App\Domain\Auth\Actions\CreateUserAction;
-use App\Domain\Auth\Actions\UpdateRoleAction;
 use App\Domain\Auth\Actions\UpdateUserAction;
 use App\Domain\Auth\DTOs\RoleData;
 use App\Domain\Auth\DTOs\UserData;
@@ -277,11 +276,7 @@ class PermissionAuditLogTest extends TestCase
             ->exists());
 
         $replacement = Permission::factory()->create(['slug' => 'posts.edit']);
-        app(UpdateRoleAction::class)($role, new RoleData(
-            name: 'Editor',
-            slug: 'editor',
-            permissionIds: [$replacement->id],
-        ));
+        $role->permissions()->sync([$replacement->id]);
 
         $this->assertTrue(PermissionAuditLog::query()
             ->where('action', PermissionAuditAction::Revoked)

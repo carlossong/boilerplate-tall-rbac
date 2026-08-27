@@ -21,13 +21,16 @@
                 </flux:subheading>
             </div>
 
-            @can('create', App\Domain\Auth\Models\Role::class)
-                <div class="flex items-center gap-2">
+            <div class="flex items-center gap-2">
+                <flux:button variant="filled" icon="table-cells" :href="route('admin.roles.matrix')" wire:navigate>
+                    {{ __('Permission Matrix') }}
+                </flux:button>
+                @can('create', App\Domain\Auth\Models\Role::class)
                     <flux:button variant="primary" icon="plus" wire:click="openCreateModal">
                         {{ __('New Role') }}
                     </flux:button>
-                </div>
-            @endcan
+                @endcan
+            </div>
         </div>
 
         @if (session('status'))
@@ -154,9 +157,7 @@
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
-                                <flux:badge size="sm" :color="$role->levelBadgeColor()" inset="top bottom">
-                                    Lvl {{ $role->level }}
-                                </flux:badge>
+                                <x-auth.level-badge :level="$role->level" />
                             </flux:table.cell>
 
 
@@ -171,13 +172,13 @@
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
-                                <div class="flex items-center gap-1.5">
+                                <a href="{{ route('admin.roles.matrix') }}" wire:navigate class="flex items-center gap-1.5 text-zinc-700 dark:text-zinc-300 hover:text-zinc-950 dark:hover:text-white">
                                     <flux:icon icon="key" class="size-3.5 text-zinc-400" />
-                                    <span class="text-sm font-medium text-zinc-700 dark:text-zinc-300">
+                                    <span class="text-sm font-medium">
                                         {{ $role->permissions_count }}
                                     </span>
                                     <span class="text-xs text-zinc-400">{{ __('abilities') }}</span>
-                                </div>
+                                </a>
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
@@ -245,7 +246,7 @@
                         </flux:table.row>
                     @empty
                         <flux:table.row>
-                            <flux:table.cell colspan="6" class="text-center py-12 px-6">
+                            <flux:table.cell colspan="8" class="text-center py-12 px-6">
                                 <div class="flex flex-col items-center justify-center text-center">
                                     <div class="size-12 rounded-full bg-zinc-100 dark:bg-zinc-800 flex items-center justify-center text-zinc-400 mb-3">
                                         <flux:icon icon="shield-check" class="size-6" />
@@ -277,14 +278,14 @@
     </div>
 
     <!-- Create / Edit Role Modal -->
-    <flux:modal wire:model.self="showingModal" class="max-w-2xl">
+    <flux:modal wire:model.self="showingModal" class="max-w-xl">
         <form wire:submit="save" class="space-y-6">
             <div>
                 <flux:heading size="lg">
                     {{ $form->id ? __('Edit Role') : __('Create New Role') }}
                 </flux:heading>
                 <flux:subheading>
-                    {{ $form->id ? __('Configure role attributes and fine-tune assigned permissions.') : __('Create a custom role and attach permissions across system resources.') }}
+                    {{ $form->id ? __('Configure role attributes. Grant abilities in the permission matrix.') : __('Create a custom role, then grant abilities in the permission matrix.') }}
                 </flux:subheading>
             </div>
 
@@ -316,45 +317,6 @@
                         </div>
                     </div>
                 @endif
-
-                <!-- Grouped Permissions -->
-                <div>
-                    <div class="flex items-center justify-between mb-2">
-                        <flux:label class="font-medium">{{ __('Attached Permissions by Group') }}</flux:label>
-                        <span class="text-xs text-zinc-500">
-                            {{ count($form->permission_ids) }} {{ __('selected') }}
-                        </span>
-                    </div>
-
-                    <div class="space-y-4 border border-zinc-200 dark:border-zinc-800 rounded-lg p-4 max-h-80 overflow-y-auto bg-zinc-50/30 dark:bg-zinc-900/30">
-                        @foreach ($groupedPermissions as $resource => $permissions)
-                            <div class="rounded-md border border-zinc-200/60 dark:border-zinc-800/60 p-3 bg-white/70 dark:bg-zinc-900/70">
-                                <div class="flex items-center justify-between mb-2 pb-1 border-b border-zinc-100 dark:border-zinc-800/60">
-                                    <span class="text-xs font-bold uppercase tracking-wider text-zinc-600 dark:text-zinc-300">
-                                        {{ ucfirst($resource) }}
-                                    </span>
-                                    <span class="text-xs text-zinc-400">
-                                        {{ count(array_intersect($permissions->pluck('id')->all(), $form->permission_ids)) }} / {{ $permissions->count() }}
-                                    </span>
-                                </div>
-
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    @foreach ($permissions as $permission)
-                                        <div class="p-1.5 rounded hover:bg-zinc-50 dark:hover:bg-zinc-800/40 transition-colors">
-                                            <flux:checkbox
-                                                wire:model="form.permission_ids"
-                                                value="{{ $permission->id }}"
-                                                :label="$permission->name"
-                                                :description="$permission->slug"
-                                            />
-                                        </div>
-                                    @endforeach
-                                </div>
-                            </div>
-                        @endforeach
-                    </div>
-                    <flux:error name="form.permission_ids" />
-                </div>
             </div>
 
             <div class="flex justify-end gap-2.5 pt-2 border-t border-zinc-200 dark:border-zinc-800">

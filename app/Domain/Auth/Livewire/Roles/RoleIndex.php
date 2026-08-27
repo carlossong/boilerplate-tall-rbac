@@ -64,7 +64,7 @@ class RoleIndex extends Component
 
     public function openEditModal(string $id): void
     {
-        $role = Role::withTrashed()->with(['permissions', 'departments'])->findOrFail($id);
+        $role = Role::withTrashed()->with('departments')->findOrFail($id);
         $this->authorize('update', $role);
 
         if ($role->isSystem()) {
@@ -173,7 +173,6 @@ class RoleIndex extends Component
         }
 
         $roles = $query->with('departments')->orderByLevel()->paginate(10);
-        $allPermissions = Permission::groupedForAssignment();
 
         $stats = [
             'total' => Role::withTrashed()->count(),
@@ -186,7 +185,6 @@ class RoleIndex extends Component
 
         return view('domain.auth.roles.index', [
             'roles' => $roles,
-            'groupedPermissions' => $allPermissions,
             'stats' => $stats,
             'availableDepartments' => $availableDepartments,
         ]);

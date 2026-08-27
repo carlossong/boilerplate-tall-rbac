@@ -6,6 +6,7 @@ use App\Domain\Auth\Livewire\AuditLogs\PermissionAuditLogIndex;
 use App\Domain\Auth\Livewire\Departments\DepartmentIndex;
 use App\Domain\Auth\Livewire\Permissions\PermissionIndex;
 use App\Domain\Auth\Livewire\Roles\RoleIndex;
+use App\Domain\Auth\Livewire\Roles\RolePermissionMatrix;
 use App\Domain\Auth\Livewire\Users\UserIndex;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('users', UserIndex::class)->name('users.index');
         Route::get('departments', DepartmentIndex::class)->name('departments.index');
+        Route::get('roles/matrix', RolePermissionMatrix::class)->name('roles.matrix');
         Route::get('roles', RoleIndex::class)->name('roles.index');
         Route::get('permissions', PermissionIndex::class)->name('permissions.index');
         Route::get('audit-logs', PermissionAuditLogIndex::class)->name('audit-logs.index');

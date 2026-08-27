@@ -20,8 +20,6 @@ class RoleManagementTest extends TestCase
 
     protected Role $adminRole;
 
-    protected Permission $perm;
-
     protected function setUp(): void
     {
         parent::setUp();
@@ -38,8 +36,6 @@ class RoleManagementTest extends TestCase
 
         $this->adminUser = User::factory()->create();
         $this->adminUser->roles()->attach($this->adminRole);
-
-        $this->perm = Permission::create(['name' => 'Special Action', 'slug' => 'special.action']);
     }
 
     public function test_unauthorized_user_cannot_access_roles(): void
@@ -57,10 +53,12 @@ class RoleManagementTest extends TestCase
 
         $this->get(route('admin.roles.index'))
             ->assertOk()
-            ->assertSee('Roles Management');
+            ->assertSee('Roles Management')
+            ->assertSee('Permission Matrix')
+            ->assertSee('Lvl');
     }
 
-    public function test_can_create_role_with_permissions(): void
+    public function test_can_create_role_without_assigning_permissions_in_the_form(): void
     {
         $this->actingAs($this->adminUser);
 
@@ -70,7 +68,6 @@ class RoleManagementTest extends TestCase
             ->set('form.name', 'Auditor')
             ->set('form.slug', 'auditor')
             ->set('form.description', 'Audits application data')
-            ->set('form.permission_ids', [$this->perm->id])
             ->call('save')
             ->assertHasNoErrors()
             ->assertSet('showingModal', false);
@@ -78,7 +75,7 @@ class RoleManagementTest extends TestCase
         $role = Role::where('slug', 'auditor')->first();
         $this->assertNotNull($role);
         $this->assertEquals('Auditor', $role->name);
-        $this->assertTrue($role->permissions->contains($this->perm));
+        $this->assertCount(0, $role->permissions);
     }
 
     public function test_can_update_role(): void
