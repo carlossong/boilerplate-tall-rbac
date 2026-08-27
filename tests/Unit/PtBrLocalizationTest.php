@@ -34,13 +34,13 @@ class PtBrLocalizationTest extends TestCase
         $this->assertSame('Funções', __('Roles', [], 'pt_BR'));
         $this->assertSame('Permissões', __('Permissions', [], 'pt_BR'));
         $this->assertSame('Departamentos', __('Departments', [], 'pt_BR'));
-        $this->assertSame('Logs de auditoria', __('Audit Logs', [], 'pt_BR'));
+        $this->assertSame('Logs de Auditoria', __('Audit Logs', [], 'pt_BR'));
         $this->assertSame('Administração', __('Administration', [], 'pt_BR'));
-        $this->assertSame('Gestão de usuários', __('User Management', [], 'pt_BR'));
+        $this->assertSame('Gestão de Usuários', __('User Management', [], 'pt_BR'));
         $this->assertSame('Segurança', __('Security', [], 'pt_BR'));
-        $this->assertSame('Chaves de acesso', __('Passkeys', [], 'pt_BR'));
+        $this->assertSame('Chaves de Acesso', __('Passkeys', [], 'pt_BR'));
         $this->assertSame('Sair', __('Log out', [], 'pt_BR'));
-        $this->assertSame('Autenticação de dois fatores', __('Two-factor authentication', [], 'pt_BR'));
+        $this->assertSame('Autenticação de Dois Fatores', __('Two-factor authentication', [], 'pt_BR'));
     }
 
     public function test_application_translation_keys_exist_in_pt_br_json(): void

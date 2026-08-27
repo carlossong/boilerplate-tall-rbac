@@ -22,31 +22,31 @@ class RolePermissionSeeder extends Seeder
         // 1. Register Canonical Permissions
         $permissions = [
             // Users
-            ['name' => 'Visualizar usuários', 'slug' => 'users.view', 'description' => 'Permite visualizar a lista de usuários e os detalhes dos perfis.'],
-            ['name' => 'Criar usuários', 'slug' => 'users.create', 'description' => 'Permite cadastrar novas contas de usuário.'],
-            ['name' => 'Atualizar usuários', 'slug' => 'users.update', 'description' => 'Permite atualizar perfis de usuário e atribuições de função.'],
-            ['name' => 'Excluir usuários', 'slug' => 'users.delete', 'description' => 'Permite excluir e restaurar contas de usuário.'],
+            ['name' => 'Visualizar Usuários', 'slug' => 'users.view', 'description' => 'Permite visualizar a lista de usuários e os detalhes dos perfis.'],
+            ['name' => 'Criar Usuários', 'slug' => 'users.create', 'description' => 'Permite cadastrar novas contas de usuário.'],
+            ['name' => 'Atualizar Usuários', 'slug' => 'users.update', 'description' => 'Permite atualizar perfis de usuário e atribuições de função.'],
+            ['name' => 'Excluir Usuários', 'slug' => 'users.delete', 'description' => 'Permite excluir e restaurar contas de usuário.'],
 
             // Departments
-            ['name' => 'Visualizar departamentos', 'slug' => 'departments.view', 'description' => 'Permite visualizar departamentos e unidades da empresa.'],
-            ['name' => 'Criar departamentos', 'slug' => 'departments.create', 'description' => 'Permite criar novos departamentos.'],
-            ['name' => 'Atualizar departamentos', 'slug' => 'departments.update', 'description' => 'Permite atualizar dados do departamento e vínculos de função.'],
-            ['name' => 'Excluir departamentos', 'slug' => 'departments.delete', 'description' => 'Permite excluir e restaurar departamentos.'],
+            ['name' => 'Visualizar Departamentos', 'slug' => 'departments.view', 'description' => 'Permite visualizar departamentos e unidades da empresa.'],
+            ['name' => 'Criar Departamentos', 'slug' => 'departments.create', 'description' => 'Permite criar novos departamentos.'],
+            ['name' => 'Atualizar Departamentos', 'slug' => 'departments.update', 'description' => 'Permite atualizar dados do departamento e vínculos de função.'],
+            ['name' => 'Excluir Departamentos', 'slug' => 'departments.delete', 'description' => 'Permite excluir e restaurar departamentos.'],
 
             // Roles
-            ['name' => 'Visualizar funções', 'slug' => 'roles.view', 'description' => 'Permite visualizar as funções do sistema e as permissões atribuídas.'],
-            ['name' => 'Criar funções', 'slug' => 'roles.create', 'description' => 'Permite definir novas funções do sistema.'],
-            ['name' => 'Atualizar funções', 'slug' => 'roles.update', 'description' => 'Permite atualizar funções e atribuições de permissão.'],
-            ['name' => 'Excluir funções', 'slug' => 'roles.delete', 'description' => 'Permite excluir logicamente e restaurar funções.'],
+            ['name' => 'Visualizar Funções', 'slug' => 'roles.view', 'description' => 'Permite visualizar as funções do sistema e as permissões atribuídas.'],
+            ['name' => 'Criar Funções', 'slug' => 'roles.create', 'description' => 'Permite definir novas funções do sistema.'],
+            ['name' => 'Atualizar Funções', 'slug' => 'roles.update', 'description' => 'Permite atualizar funções e atribuições de permissão.'],
+            ['name' => 'Excluir Funções', 'slug' => 'roles.delete', 'description' => 'Permite excluir logicamente e restaurar funções.'],
 
             // Permissions
-            ['name' => 'Visualizar permissões', 'slug' => 'permissions.view', 'description' => 'Permite visualizar habilidades de permissão e slugs do sistema.'],
-            ['name' => 'Criar permissões', 'slug' => 'permissions.create', 'description' => 'Permite cadastrar novos slugs de permissão personalizados.'],
-            ['name' => 'Atualizar permissões', 'slug' => 'permissions.update', 'description' => 'Permite atualizar nomes e descrições de permissão.'],
-            ['name' => 'Excluir permissões', 'slug' => 'permissions.delete', 'description' => 'Permite excluir habilidades de permissão.'],
+            ['name' => 'Visualizar Permissões', 'slug' => 'permissions.view', 'description' => 'Permite visualizar habilidades de permissão e slugs do sistema.'],
+            ['name' => 'Criar Permissões', 'slug' => 'permissions.create', 'description' => 'Permite cadastrar novos slugs de permissão personalizados.'],
+            ['name' => 'Atualizar Permissões', 'slug' => 'permissions.update', 'description' => 'Permite atualizar nomes e descrições de permissão.'],
+            ['name' => 'Excluir Permissões', 'slug' => 'permissions.delete', 'description' => 'Permite excluir habilidades de permissão.'],
 
             // Audit
-            ['name' => 'Visualizar logs de auditoria', 'slug' => 'audit-logs.view', 'description' => 'Permite visualizar quem atribuiu ou revogou funções e permissões.'],
+            ['name' => 'Visualizar Logs de Auditoria', 'slug' => 'audit-logs.view', 'description' => 'Permite visualizar quem atribuiu ou revogou funções e permissões.'],
         ];
 
         $createdPermissions = [];
@@ -65,7 +65,7 @@ class RolePermissionSeeder extends Seeder
         $executive = Department::updateOrCreate(
             ['slug' => 'executive-board'],
             [
-                'name' => 'Diretoria executiva',
+                'name' => 'Diretoria Executiva',
                 'description' => 'Liderança executiva, governança corporativa e estratégia global.',
                 'is_active' => true,
             ],
@@ -74,7 +74,7 @@ class RolePermissionSeeder extends Seeder
         $finance = Department::updateOrCreate(
             ['slug' => 'finance'],
             [
-                'name' => 'Departamento financeiro',
+                'name' => 'Departamento Financeiro',
                 'description' => 'Contas a pagar, contas a receber, aprovações de orçamento e tesouraria.',
                 'is_active' => true,
             ],
@@ -83,7 +83,7 @@ class RolePermissionSeeder extends Seeder
         $operations = Department::updateOrCreate(
             ['slug' => 'operations'],
             [
-                'name' => 'Operações e logística',
+                'name' => 'Operações e Logística',
                 'description' => 'Gestão de frota, roteirização, turnos e logística operacional.',
                 'is_active' => true,
             ],
@@ -92,7 +92,7 @@ class RolePermissionSeeder extends Seeder
         $hr = Department::updateOrCreate(
             ['slug' => 'human-resources'],
             [
-                'name' => 'Recursos humanos',
+                'name' => 'Recursos Humanos',
                 'description' => 'Gestão de talentos, organização departamental e integração de colaboradores.',
                 'is_active' => true,
             ],
@@ -113,7 +113,7 @@ class RolePermissionSeeder extends Seeder
         $managerRole = Role::updateOrCreate(
             ['slug' => 'manager'],
             [
-                'name' => 'Gerente de departamento',
+                'name' => 'Gerente de Departamento',
                 'level' => 50,
                 'description' => 'Gestão de equipe e autorização operacional dentro do departamento.',
             ],
@@ -169,7 +169,7 @@ class RolePermissionSeeder extends Seeder
         $managerUser = User::updateOrCreate(
             ['email' => 'manager@example.com'],
             [
-                'name' => 'Gerente de operações',
+                'name' => 'Gerente de Operações',
                 'password' => Hash::make('password'),
                 'is_super_admin' => false,
                 'email_verified_at' => now(),
@@ -183,7 +183,7 @@ class RolePermissionSeeder extends Seeder
         $viewerUser = User::updateOrCreate(
             ['email' => 'viewer@example.com'],
             [
-                'name' => 'Usuário visualizador',
+                'name' => 'Usuário Visualizador',
                 'password' => Hash::make('password'),
                 'is_super_admin' => false,
                 'email_verified_at' => now(),
