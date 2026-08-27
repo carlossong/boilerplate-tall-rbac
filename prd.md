@@ -4,9 +4,13 @@
 
 Implementar, no boilerplate TALL Stack (Laravel 13 + Livewire 4 + Flux UI + Alpine.js + Tailwind CSS v4), um sistema completo de **RBAC (Role-Based Access Control)** com gerenciamento de:
 
-1. **Usuários (Users)**
-2. **Papéis (Roles)**
-3. **Permissões (Permissions)**
+1. **Usuários**
+2. **Funções (Roles)**
+3. **Permissões**
+4. **Departamentos** (unidades organizacionais e funções por setor)
+5. **Logs de auditoria** de concessão/revogação de funções e permissões
+
+A interface padrão é **pt-BR**. A palavra **Dashboard** permanece em inglês.
 
 A autorização é **100% nativa do Laravel** (`Gate`, `Policy`, `Authorizable`, `Gate::before`, `can()`/`@can`), sem qualquer dependência de pacotes externos (como `spatie/laravel-permission` ou `bouncer`).
 
@@ -34,10 +38,14 @@ A autorização é **100% nativa do Laravel** (`Gate`, `Policy`, `Authorizable`,
   - Formulários com validação imediata e feedback visual de erros.
   - Modais de confirmação para soft delete e restauração de registros.
 - **Seeders & Bootstrap:**
-  - Seeder com roles essenciais (`admin`, `viewer`) e permissions padrão para todos os recursos.
-  - Criação/suporte a usuário Super Admin via configuração local/ambiente.
-- **Suíte de Testes Pest:**
-  - Cobertura completa de Policies, Gates, Actions e componentes Livewire (caminhos positivos e negativos com 403 Forbidden).
+  - `RolePermissionSeeder` com funções (`admin`, `manager`, `operator`, `viewer`), departamentos, permissões canônicas e usuários de demo. Nomes e descrições em pt-BR, com títulos no padrão *Title Case* (`Operações e Logística`, `Visualizar Usuários`). Slugs permanecem em inglês (`users.view`, `finance`).
+  - Superadministrador de demo: `admin@example.com` / `password`.
+- **Localização:**
+  - `APP_LOCALE=pt_BR`, fallback `en`. Catálogo em `lang/pt_BR.json` e `lang/pt_BR/*.php`.
+  - Toda string de UI usa `__()`; o teste `PtBrLocalizationTest` exige que as chaves existam no JSON.
+- **Suíte de Testes PHPUnit:**
+  - Cobertura de Policies, Gates, Actions e componentes Livewire (caminhos positivos e negativos com 403 Forbidden).
+  - Testes forçam `APP_LOCALE=en` (`phpunit.xml` + `TestCase`) para asserções de copy em inglês.
 
 ---
 
@@ -209,7 +217,7 @@ database/
 
 ## 7. Componentes de Interface (Flux UI)
 
-Para cada recurso (`Users`, `Roles`, `Permissions`):
+Para cada recurso (`Users`, `Roles`, `Permissions`, `Departments`, `Audit Logs`):
 - **Index:** Tabela Flux UI com filtro de pesquisa instantâneo, paginação assíncrona, badges informativas e ações restritas via `@can`.
 - **Formulários (Create/Edit):** Campos com componentes nativos Flux (`<flux:input>`, `<flux:textarea>`, `<flux:checkbox.group>` ou select múltiplo para roles e permissions).
 - **Modais de Ação:** Diálogos Flux (`<flux:modal>`) para confirmar soft deletes e restauração sem reload de página.
@@ -217,9 +225,9 @@ Para cada recurso (`Users`, `Roles`, `Permissions`):
 
 ---
 
-## 8. Estratégia de Testes (Pest)
+## 8. Estratégia de Testes (PHPUnit)
 
-Localização dos testes: `tests/Feature/Domain/Auth/`.
+Localização dos testes: `tests/Feature/Domain/Auth/` e `tests/Unit/PtBrLocalizationTest.php`.
 
 - **Testes de Policies e Gates:**
   - Verificação de acesso concedido com permissão específica.
@@ -235,14 +243,27 @@ Localização dos testes: `tests/Feature/Domain/Auth/`.
 
 ---
 
-## 9. Critérios de Aceite e Definição de Pronto (DoD)
+## 9. Localização (pt-BR)
+
+- Locale padrão: `APP_LOCALE=pt_BR` (`.env.example`). Fallback: `en`.
+- Strings de interface: `__('English source')` + entrada em `lang/pt_BR.json`.
+- **Dashboard** não é traduzido.
+- Títulos (páginas, sidebar, breadcrumbs, labels, colunas): primeira letra das palavras principais em maiúscula; conectivos (`de`, `e`, `do`, `da`, `no`) em minúscula. Ex.: `Gestão de Usuários`, `Logs de Auditoria de Permissões`.
+- Descrições e mensagens de ajuda permanecem em frase normal.
+- Testes de UI rodam em inglês (`APP_LOCALE=en` forçado no PHPUnit).
+
+---
+
+## 10. Critérios de Aceite e Definição de Pronto (DoD)
 
 - [ ] Autorização e validação presentes em 100% dos métodos de escrita.
 - [ ] Nenhuma dependência externa adicionada no `composer.json` para autorização.
 - [ ] Chave primária UUID e soft deletes funcionando em todas as tabelas do domínio.
 - [ ] Cache de permissões resiliente e com invalidação atômica garantida.
 - [ ] Prevenção de queries N+1 comprovada via testes e profiling.
-- [ ] Todos os testes Pest passando (`vendor/bin/pest` ou `composer test`).
+- [ ] Todos os testes PHPUnit passando (`php artisan test` ou `composer test`).
+- [ ] Interface e seeder em pt-BR, com **Dashboard** sem tradução e títulos em *Title Case*.
+- [ ] Chaves de `__()` presentes em `lang/pt_BR.json` (coberto por `PtBrLocalizationTest`).
 - [ ] Análise estática do PHPStan / Larastan sem erros (`composer types:check`).
 - [ ] Formatação consistente executada pelo Laravel Pint (`composer lint:check`).
 - [ ] `declare(strict_types=1)` presente em todos os novos arquivos PHP.
