@@ -37,6 +37,13 @@
             </div>
         @endif
 
+        @if (session('error'))
+            <div class="flex items-center gap-3 rounded-lg bg-red-50/80 dark:bg-red-950/30 p-3.5 border border-red-200/80 dark:border-red-800/60 text-red-900 dark:text-red-200 text-sm font-medium">
+                <flux:icon icon="exclamation-triangle" class="size-5 text-red-600 dark:text-red-400 shrink-0" />
+                <span>{{ session('error') }}</span>
+            </div>
+        @endif
+
         <!-- Metric KPI Cards -->
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <flux:card class="!p-6 bg-zinc-50/60 dark:bg-zinc-900/60 border-zinc-200/80 dark:border-zinc-800 shadow-2xs">
@@ -207,7 +214,9 @@
                                     @php
                                         $canRestore = $user->trashed() && auth()->user()?->can('restore', $user);
                                         $canUpdate = ! $user->trashed() && auth()->user()?->can('update', $user);
-                                        $canDelete = ! $user->trashed() && auth()->user()?->can('delete', $user);
+                                        $isSelf = auth()->id() === $user->id;
+                                        $isLastActiveSuperAdmin = $user->is_super_admin && \App\Domain\Auth\Models\User::withoutTrashed()->where('is_super_admin', true)->count() <= 1;
+                                        $canDelete = ! $user->trashed() && ! $isSelf && ! $isLastActiveSuperAdmin && auth()->user()?->can('delete', $user);
                                     @endphp
 
                                     @if ($canRestore || $canUpdate || $canDelete)

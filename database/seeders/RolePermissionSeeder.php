@@ -99,6 +99,7 @@ class RolePermissionSeeder extends Seeder
             [
                 'name' => 'Administrator',
                 'level' => 80,
+                'is_system' => true,
                 'description' => 'Full administrative access to all company resources.',
             ],
         );

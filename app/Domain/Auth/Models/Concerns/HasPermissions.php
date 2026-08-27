@@ -278,6 +278,23 @@ trait HasPermissions
     }
 
     /**
+     * Determine if the user has administrative access to manage the system or access the panel.
+     */
+    public function hasAdministrativeAccess(): bool
+    {
+        if ($this->isSuperAdmin()) {
+            return true;
+        }
+
+        return $this->highestRoleLevel() >= Role::LEVEL_MANAGER
+            || $this->hasRole(['admin', 'manager'])
+            || $this->hasPermissionTo('users.view')
+            || $this->hasPermissionTo('roles.view')
+            || $this->hasPermissionTo('departments.view')
+            || $this->hasPermissionTo('permissions.view');
+    }
+
+    /**
      * Clear cached permission slugs and computed levels for the instance.
      */
     public function flushCachedPermissions(): void

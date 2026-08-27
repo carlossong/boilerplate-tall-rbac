@@ -12,6 +12,7 @@ use App\Domain\Auth\Livewire\Forms\UserForm;
 use App\Domain\Auth\Models\Department;
 use App\Domain\Auth\Models\Role;
 use App\Domain\Auth\Models\User;
+use DomainException;
 use Illuminate\Contracts\View\View;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -89,17 +90,26 @@ class UserIndex extends Component
             $user = User::withTrashed()->findOrFail($this->form->id);
             $this->authorize('update', $user);
 
-            // Apenas super administradores podem alterar o status de super admin
+            // Only super administrators can alter super admin status
             if (! $isCurrentSuperAdmin) {
                 $this->form->is_super_admin = $user->is_super_admin;
             }
 
-            $updateAction($user, $this->form->toDTO());
-            session()->flash('status', __('User updated successfully.'));
+            $currentUser = auth()->user();
+            $domainUser = $currentUser instanceof User ? $currentUser : null;
+
+            try {
+                $updateAction($user, $this->form->toDTO(), $domainUser);
+                session()->flash('status', __('User updated successfully.'));
+            } catch (DomainException $e) {
+                session()->flash('error', $e->getMessage());
+
+                return;
+            }
         } else {
             $this->authorize('create', User::class);
 
-            // Apenas super administradores podem criar novos super admins
+            // Only super administrators can create new super admins
             if (! $isCurrentSuperAdmin) {
                 $this->form->is_super_admin = false;
             }
@@ -134,7 +144,12 @@ class UserIndex extends Component
         $currentUser = auth()->user();
         $domainUser = $currentUser instanceof User ? $currentUser : null;
 
-        $deleteAction($user, $domainUser);
+        try {
+            $deleteAction($user, $domainUser);
+            session()->flash('status', __('User deleted successfully.'));
+        } catch (DomainException $e) {
+            session()->flash('error', $e->getMessage());
+        }
 
         $this->showingDeleteModal = false;
         $this->deletingUserId = null;

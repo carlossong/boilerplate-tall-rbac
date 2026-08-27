@@ -63,6 +63,18 @@ class UserPolicy
             return false;
         }
 
+        // Cannot delete the last active super administrator
+        if ($model->isSuperAdmin()) {
+            $otherActiveSuperAdmins = User::withoutTrashed()
+                ->where('is_super_admin', true)
+                ->where('id', '!=', $model->id)
+                ->count();
+
+            if ($otherActiveSuperAdmins === 0) {
+                return false;
+            }
+        }
+
         if ($user->isSuperAdmin()) {
             return true;
         }

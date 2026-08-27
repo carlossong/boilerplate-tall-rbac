@@ -19,6 +19,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
  * @property string $name
  * @property string $slug
  * @property int $level
+ * @property bool $is_system
  * @property string|null $description
  * @property Collection<int, Permission> $permissions
  */
@@ -86,7 +87,24 @@ class Role extends Model
     {
         return [
             'level' => 'integer',
+            'is_system' => 'boolean',
         ];
+    }
+
+    /**
+     * Determine if the role is an immutable system role.
+     */
+    public function isSystem(): bool
+    {
+        return (bool) ($this->is_system ?? false) || in_array($this->slug, ['admin', 'super-admin'], true);
+    }
+
+    /**
+     * Determine if this role grants administrative powers.
+     */
+    public function isAdministrative(): bool
+    {
+        return $this->isSystem() || $this->level >= self::LEVEL_MANAGER;
     }
 
     /**

@@ -139,7 +139,7 @@
                                 <div class="grid leading-tight">
                                     <div class="flex items-center gap-2">
                                         <span class="font-medium text-zinc-900 dark:text-zinc-100">{{ $role->name }}</span>
-                                        @if ($role->slug === 'admin')
+                                        @if ($role->isSystem())
                                             <flux:badge size="sm" color="purple" inset="top bottom">{{ __('System Role') }}</flux:badge>
                                         @endif
                                     </div>
@@ -206,8 +206,8 @@
                                 <div class="flex justify-center">
                                     @php
                                         $canRestore = $role->trashed() && auth()->user()?->can('restore', $role);
-                                        $canUpdate = ! $role->trashed() && auth()->user()?->can('update', $role);
-                                        $canDelete = ! $role->trashed() && $role->slug !== 'admin' && auth()->user()?->can('delete', $role);
+                                        $canUpdate = ! $role->trashed() && ! $role->isSystem() && auth()->user()?->can('update', $role);
+                                        $canDelete = ! $role->trashed() && ! $role->isSystem() && auth()->user()?->can('delete', $role);
                                     @endphp
 
                                     @if ($canRestore || $canUpdate || $canDelete)

@@ -38,6 +38,10 @@ class RolePolicy
      */
     public function update(User $user, Role $role): bool
     {
+        if ($role->isSystem()) {
+            return false;
+        }
+
         if ($user->isSuperAdmin()) {
             return true;
         }
@@ -50,8 +54,7 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
-        // Prevents deletion of protected structural roles
-        if (in_array($role->slug, ['admin', 'super-admin'], true)) {
+        if ($role->isSystem()) {
             return false;
         }
 

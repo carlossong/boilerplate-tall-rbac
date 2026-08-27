@@ -67,6 +67,12 @@ class RoleIndex extends Component
         $role = Role::withTrashed()->with(['permissions', 'departments'])->findOrFail($id);
         $this->authorize('update', $role);
 
+        if ($role->isSystem()) {
+            session()->flash('error', __('System roles cannot be edited.'));
+
+            return;
+        }
+
         $this->form->setRole($role);
         $this->resetValidation();
         $this->showingModal = true;
@@ -80,8 +86,14 @@ class RoleIndex extends Component
             $role = Role::withTrashed()->findOrFail($this->form->id);
             $this->authorize('update', $role);
 
-            $updateAction($role, $this->form->toDTO());
-            session()->flash('status', __('Role updated successfully.'));
+            try {
+                $updateAction($role, $this->form->toDTO());
+                session()->flash('status', __('Role updated successfully.'));
+            } catch (DomainException $e) {
+                session()->flash('error', $e->getMessage());
+
+                return;
+            }
         } else {
             $this->authorize('create', Role::class);
 
@@ -97,6 +109,12 @@ class RoleIndex extends Component
     {
         $role = Role::findOrFail($id);
         $this->authorize('delete', $role);
+
+        if ($role->isSystem()) {
+            session()->flash('error', __('System roles cannot be deleted.'));
+
+            return;
+        }
 
         $this->deletingRoleId = $role->id;
         $this->deletingRoleName = $role->name;

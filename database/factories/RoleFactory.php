@@ -28,9 +28,17 @@ class RoleFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name).'-'.fake()->unique()->randomNumber(3),
             'level' => 10,
+            'is_system' => false,
             'description' => fake()->sentence(),
         ];
 
+    }
+
+    public function system(): static
+    {
+        return $this->state(fn () => [
+            'is_system' => true,
+        ]);
     }
 
     public function admin(): static
@@ -39,6 +47,7 @@ class RoleFactory extends Factory
             'name' => 'Administrator',
             'slug' => 'admin',
             'level' => 80,
+            'is_system' => true,
         ]);
     }
 

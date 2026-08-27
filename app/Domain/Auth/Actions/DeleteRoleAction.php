@@ -11,8 +11,8 @@ final readonly class DeleteRoleAction
 {
     public function __invoke(Role $role): bool
     {
-        if ($role->slug === 'admin') {
-            throw new DomainException(__('The administrator role cannot be deleted.'));
+        if ($role->isSystem()) {
+            throw new DomainException(__('System roles cannot be deleted.'));
         }
 
         return (bool) $role->delete();

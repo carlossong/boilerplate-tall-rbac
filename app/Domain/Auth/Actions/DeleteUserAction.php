@@ -15,6 +15,17 @@ final readonly class DeleteUserAction
             throw new DomainException(__('You cannot delete your own account.'));
         }
 
+        if ($user->is_super_admin) {
+            $otherActiveSuperAdmins = User::withoutTrashed()
+                ->where('is_super_admin', true)
+                ->where('id', '!=', $user->id)
+                ->count();
+
+            if ($otherActiveSuperAdmins === 0) {
+                throw new DomainException(__('Cannot delete the last remaining active super administrator.'));
+            }
+        }
+
         return (bool) $user->delete();
     }
 }
