@@ -13,6 +13,21 @@
                 <flux:navbar.item icon="layout-grid" :href="route('dashboard')" :current="request()->routeIs('dashboard')" wire:navigate>
                     {{ __('Dashboard') }}
                 </flux:navbar.item>
+                @can('users.view')
+                    <flux:navbar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
+                        {{ __('Users') }}
+                    </flux:navbar.item>
+                @endcan
+                @can('roles.view')
+                    <flux:navbar.item icon="shield-check" :href="route('admin.roles.index')" :current="request()->routeIs('admin.roles.*')" wire:navigate>
+                        {{ __('Roles') }}
+                    </flux:navbar.item>
+                @endcan
+                @can('permissions.view')
+                    <flux:navbar.item icon="key" :href="route('admin.permissions.index')" :current="request()->routeIs('admin.permissions.*')" wire:navigate>
+                        {{ __('Permissions') }}
+                    </flux:navbar.item>
+                @endcan
             </flux:navbar>
 
             <flux:spacer />

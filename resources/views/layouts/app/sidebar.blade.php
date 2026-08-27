@@ -16,6 +16,26 @@
                         {{ __('Dashboard') }}
                     </flux:sidebar.item>
                 </flux:sidebar.group>
+
+                @if (auth()->user()?->can('users.view') || auth()->user()?->can('roles.view') || auth()->user()?->can('permissions.view'))
+                    <flux:sidebar.group :heading="__('Administration')" class="grid">
+                        @can('users.view')
+                            <flux:sidebar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
+                                {{ __('Users') }}
+                            </flux:sidebar.item>
+                        @endcan
+                        @can('roles.view')
+                            <flux:sidebar.item icon="shield-check" :href="route('admin.roles.index')" :current="request()->routeIs('admin.roles.*')" wire:navigate>
+                                {{ __('Roles') }}
+                            </flux:sidebar.item>
+                        @endcan
+                        @can('permissions.view')
+                            <flux:sidebar.item icon="key" :href="route('admin.permissions.index')" :current="request()->routeIs('admin.permissions.*')" wire:navigate>
+                                {{ __('Permissions') }}
+                            </flux:sidebar.item>
+                        @endcan
+                    </flux:sidebar.group>
+                @endif
             </flux:sidebar.nav>
 
             <flux:spacer />

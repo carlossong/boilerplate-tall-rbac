@@ -1,0 +1,27 @@
+<?php
+
+declare(strict_types=1);
+
+namespace App\Domain\Auth\Actions;
+
+use App\Domain\Auth\DTOs\RoleData;
+use App\Domain\Auth\Models\Role;
+use Illuminate\Support\Facades\DB;
+
+final readonly class UpdateRoleAction
+{
+    public function __invoke(Role $role, RoleData $data): Role
+    {
+        return DB::transaction(function () use ($role, $data) {
+            $role->update([
+                'name' => $data->name,
+                'slug' => $data->slug,
+                'description' => $data->description,
+            ]);
+
+            $role->permissions()->sync($data->permissionIds);
+
+            return $role;
+        });
+    }
+}

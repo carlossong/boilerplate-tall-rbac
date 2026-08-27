@@ -61,4 +61,14 @@ class UserFactory extends Factory
         ]);
         /* @end-chisel-2fa */
     }
+
+    /**
+     * Indicate that the user is a super administrator.
+     */
+    public function superAdmin(): static
+    {
+        return $this->state(fn (array $attributes) => [
+            'is_super_admin' => true,
+        ]);
+    }
 }

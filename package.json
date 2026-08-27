@@ -4,7 +4,10 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "vite"
+        "dev": "vite",
+        "check:agents": "python3 .agents/scripts/validate_kit.py",
+        "check:antigravity": "node .agents/hooks/antigravity-doctor.mjs",
+        "test:antigravity": "node --test .agents/hooks/tests/antigravity.test.mjs"
     },
     "dependencies": {
         "@laravel/passkeys": "^0.2.0",
