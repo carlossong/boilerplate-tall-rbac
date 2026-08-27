@@ -77,13 +77,13 @@ class RbacViewTest extends TestCase
     {
         $unauthorized = User::factory()->create();
 
-        // Usuário sem permissões não vê grupo de Administração
+        // User without permissions does not see Administration group
         $this->actingAs($unauthorized)
             ->get(route('dashboard'))
             ->assertDontSee('Administration')
             ->assertDontSee('admin.users.index');
 
-        // Usuário visualizador vê grupo de Administração
+        // Viewer user sees Administration group
         $this->actingAs($this->viewerUser)
             ->get(route('dashboard'))
             ->assertSee('Administration')
@@ -100,13 +100,13 @@ class RbacViewTest extends TestCase
         $targetRole = Role::factory()->create();
         $targetPermission = Permission::factory()->create();
 
-        // UserIndex: viewer não tem botões de criar, editar ou excluir
+        // UserIndex: viewer has no create, edit, or delete buttons
         Livewire::test(UserIndex::class)
             ->assertDontSeeHtml('wire:click="openCreateModal"')
             ->assertDontSeeHtml('wire:click="openEditModal(\''.$targetUser->id.'\')"')
             ->assertDontSeeHtml('wire:click="confirmDelete(\''.$targetUser->id.'\')"');
 
-        // Tentativa de invocar ações protegidas retorna 403 Forbidden
+        // Attempting to invoke protected actions returns 403 Forbidden
         Livewire::test(UserIndex::class)
             ->call('openCreateModal')
             ->assertForbidden();
@@ -119,7 +119,7 @@ class RbacViewTest extends TestCase
             ->call('confirmDelete', $targetUser->id)
             ->assertForbidden();
 
-        // RoleIndex: viewer não tem botões de criar, editar ou excluir
+        // RoleIndex: viewer has no create, edit, or delete buttons
         Livewire::test(RoleIndex::class)
             ->assertDontSeeHtml('wire:click="openCreateModal"')
             ->assertDontSeeHtml('wire:click="openEditModal(\''.$targetRole->id.'\')"')
@@ -127,7 +127,7 @@ class RbacViewTest extends TestCase
             ->call('openCreateModal')
             ->assertForbidden();
 
-        // PermissionIndex: viewer não tem botões de criar, editar ou excluir
+        // PermissionIndex: viewer has no create, edit, or delete buttons
         Livewire::test(PermissionIndex::class)
             ->assertDontSeeHtml('wire:click="openCreateModal"')
             ->assertDontSeeHtml('wire:click="openEditModal(\''.$targetPermission->id.'\')"')
@@ -156,19 +156,19 @@ class RbacViewTest extends TestCase
     {
         $this->actingAs($this->adminUser);
 
-        // Regular admin não deve ver o checkbox de Super Administrator Privileges no modal
+        // Regular admin should not see Super Administrator Privileges checkbox in modal
         Livewire::test(UserIndex::class)
             ->call('openCreateModal')
             ->assertDontSee('Super Administrator Privileges')
             ->set('form.name', 'Hacker Attempt')
             ->set('form.email', 'hacker@example.com')
             ->set('form.password', 'password123')
-            ->set('form.is_super_admin', true) // Tenta forçar via payload
+            ->set('form.is_super_admin', true) // Attempts forcing via payload
             ->call('save');
 
         $createdUser = User::where('email', 'hacker@example.com')->first();
         $this->assertNotNull($createdUser);
-        // O status de super admin deve ter sido forçado para false
+        // Super admin status must have been forced to false
         $this->assertFalse($createdUser->is_super_admin);
     }
 
@@ -178,10 +178,10 @@ class RbacViewTest extends TestCase
 
         $otherUser = User::factory()->create(['name' => 'Target User']);
 
-        // Pode ver a opção de exclusão para outro usuário
+        // Can see delete option for another user
         $this->assertTrue($this->adminUser->can('delete', $otherUser));
 
-        // Não pode ver a opção de exclusão para si mesmo
+        // Cannot see delete option for oneself
         $this->assertFalse($this->adminUser->can('delete', $this->adminUser));
     }
 
@@ -189,7 +189,7 @@ class RbacViewTest extends TestCase
     {
         $this->actingAs($this->adminUser);
 
-        // A role 'admin' não pode ser deletada
+        // The 'admin' role cannot be deleted
         $this->assertFalse($this->adminUser->can('delete', $this->adminRole));
     }
 }

@@ -43,7 +43,7 @@ class PolicyTest extends TestCase
         $role->permissions()->attach($permission);
         $user->roles()->attach($role);
 
-        // Atualiza gates com a nova permissão
+        // Update gates with the new permission
         Gate::define('users.view', fn ($u) => $u->hasPermissionTo('users.view'));
 
         $this->assertTrue($user->can('users.view'));
@@ -63,10 +63,10 @@ class PolicyTest extends TestCase
 
         $otherUser = User::factory()->create();
 
-        // Pode excluir outro usuário
+        // Can delete another user
         $this->assertTrue(Gate::forUser($user)->allows('delete', $otherUser));
 
-        // Não pode excluir a si mesmo
+        // Cannot delete oneself
         $this->assertFalse(Gate::forUser($user)->allows('delete', $user));
     }
 

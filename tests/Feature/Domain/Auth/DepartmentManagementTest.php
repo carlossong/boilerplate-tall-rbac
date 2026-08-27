@@ -54,16 +54,16 @@ class DepartmentManagementTest extends TestCase
         Livewire::actingAs($this->admin)
             ->test(DepartmentIndex::class)
             ->call('openCreateModal')
-            ->set('form.name', 'Financeiro Central')
-            ->set('form.slug', 'financeiro-central')
-            ->set('form.description', 'Setor responsável por tesouraria e pagamentos.')
+            ->set('form.name', 'Central Finance')
+            ->set('form.slug', 'central-finance')
+            ->set('form.description', 'Sector responsible for treasury and disbursements.')
             ->set('form.is_active', true)
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('departments', [
-            'name' => 'Financeiro Central',
-            'slug' => 'financeiro-central',
+            'name' => 'Central Finance',
+            'slug' => 'central-finance',
             'is_active' => true,
         ]);
     }
@@ -71,22 +71,22 @@ class DepartmentManagementTest extends TestCase
     public function test_can_update_department(): void
     {
         $department = Department::factory()->create([
-            'name' => 'Logística Antiga',
-            'slug' => 'logistica-antiga',
+            'name' => 'Old Logistics',
+            'slug' => 'old-logistics',
         ]);
 
         Livewire::actingAs($this->admin)
             ->test(DepartmentIndex::class)
             ->call('openEditModal', $department->id)
-            ->set('form.name', 'Logística & Frotas')
-            ->set('form.slug', 'logistica-frotas')
+            ->set('form.name', 'Logistics & Fleet')
+            ->set('form.slug', 'logistics-fleet')
             ->call('save')
             ->assertHasNoErrors();
 
         $this->assertDatabaseHas('departments', [
             'id' => $department->id,
-            'name' => 'Logística & Frotas',
-            'slug' => 'logistica-frotas',
+            'name' => 'Logistics & Fleet',
+            'slug' => 'logistics-fleet',
         ]);
     }
 

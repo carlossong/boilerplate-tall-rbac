@@ -18,8 +18,8 @@ class DepartmentAuthorizationTest extends TestCase
 
     public function test_user_has_role_in_specific_department(): void
     {
-        $financialDept = Department::factory()->create(['name' => 'Financeiro', 'slug' => 'financeiro']);
-        $opsDept = Department::factory()->create(['name' => 'Operacional', 'slug' => 'operacional']);
+        $financialDept = Department::factory()->create(['name' => 'Finance', 'slug' => 'finance']);
+        $opsDept = Department::factory()->create(['name' => 'Operations', 'slug' => 'operations']);
 
         $managerRole = Role::factory()->create(['name' => 'Manager', 'slug' => 'manager', 'level' => 50]);
         $operatorRole = Role::factory()->create(['name' => 'Operator', 'slug' => 'operator', 'level' => 20]);
@@ -41,8 +41,8 @@ class DepartmentAuthorizationTest extends TestCase
 
     public function test_user_has_permission_in_department_via_sector_role(): void
     {
-        $financialDept = Department::factory()->create(['slug' => 'financeiro']);
-        $opsDept = Department::factory()->create(['slug' => 'operacional']);
+        $financialDept = Department::factory()->create(['slug' => 'finance']);
+        $opsDept = Department::factory()->create(['slug' => 'operations']);
 
         $payPermission = Permission::factory()->create(['slug' => 'expenses.pay']);
         $drivePermission = Permission::factory()->create(['slug' => 'trips.drive']);

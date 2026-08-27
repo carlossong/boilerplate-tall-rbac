@@ -82,7 +82,7 @@ class AppServiceProvider extends ServiceProvider
                 }
             }
         } catch (\Throwable) {
-            // Evita quebra durante migrações iniciais antes da existência da tabela
+            // Prevents failure during initial migrations before table exists
         }
     }
 

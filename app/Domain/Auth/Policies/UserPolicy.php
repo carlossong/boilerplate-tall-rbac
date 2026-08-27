@@ -45,7 +45,7 @@ class UserPolicy
             return false;
         }
 
-        // Permite edição do próprio perfil se tiver permissão users.update
+        // Allows editing own profile if user has users.update permission
         if ($user->id === $model->id) {
             return true;
         }
@@ -58,7 +58,7 @@ class UserPolicy
      */
     public function delete(User $user, User $model): bool
     {
-        // Um usuário não pode excluir a si mesmo
+        // A user cannot delete their own account
         if ($user->id === $model->id) {
             return false;
         }

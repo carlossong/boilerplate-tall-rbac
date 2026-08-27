@@ -50,7 +50,7 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
-        // Impede a exclusão das roles estruturais protegidas
+        // Prevents deletion of protected structural roles
         if (in_array($role->slug, ['admin', 'super-admin'], true)) {
             return false;
         }

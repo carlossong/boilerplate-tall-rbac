@@ -54,7 +54,7 @@ class ActionTest extends TestCase
         $updateData = new UserData(
             name: 'John Updated',
             email: 'john.updated@example.com',
-            password: null, // não altera senha
+            password: null, // does not change password
             isSuperAdmin: true,
             roleIds: [],
         );
@@ -75,11 +75,11 @@ class ActionTest extends TestCase
 
         $deleteAction = app(DeleteUserAction::class);
 
-        // Bloqueia auto-exclusão
+        // Blocks self-deletion
         $this->expectException(DomainException::class);
         $deleteAction($user, $user);
 
-        // Permite excluir outro usuário
+        // Allows deleting another user
         $deleteAction($otherUser, $user);
         $this->assertTrue($otherUser->fresh()->trashed());
 

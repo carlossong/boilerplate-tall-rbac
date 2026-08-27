@@ -7,6 +7,6 @@ namespace App\Models;
 use App\Domain\Auth\Models\User as DomainUser;
 
 /**
- * Model de compatibilidade que estende o User do domínio de autenticação.
+ * Compatibility model extending the authentication domain User.
  */
 class User extends DomainUser {}

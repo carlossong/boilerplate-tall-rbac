@@ -19,7 +19,7 @@ class RolePermissionSeeder extends Seeder
      */
     public function run(): void
     {
-        // 1. Cadastrar Permissões Canônicas
+        // 1. Register Canonical Permissions
         $permissions = [
             // Users
             ['name' => 'View Users', 'slug' => 'users.view', 'description' => 'Allows viewing the users list and profile details.'],
@@ -56,44 +56,44 @@ class RolePermissionSeeder extends Seeder
 
         Permission::flushCache();
 
-        // 2. Cadastrar Departamentos
-        $diretoria = Department::updateOrCreate(
-            ['slug' => 'diretoria'],
+        // 2. Register Departments
+        $executive = Department::updateOrCreate(
+            ['slug' => 'executive-board'],
             [
-                'name' => 'Diretoria Executiva',
-                'description' => 'Gestão executiva, governança e estratégias corporativas globais.',
+                'name' => 'Executive Board',
+                'description' => 'Executive leadership, corporate governance, and global strategy.',
                 'is_active' => true,
             ],
         );
 
-        $financeiro = Department::updateOrCreate(
-            ['slug' => 'financeiro'],
+        $finance = Department::updateOrCreate(
+            ['slug' => 'finance'],
             [
-                'name' => 'Departamento Financeiro',
-                'description' => 'Contas a pagar, receber, alçadas de pagamentos e tesouraria.',
+                'name' => 'Finance Department',
+                'description' => 'Accounts payable, accounts receivable, budget approvals, and treasury.',
                 'is_active' => true,
             ],
         );
 
-        $operacoes = Department::updateOrCreate(
-            ['slug' => 'operacoes'],
+        $operations = Department::updateOrCreate(
+            ['slug' => 'operations'],
             [
-                'name' => 'Operações & Logística',
-                'description' => 'Gestão de frotas, rotas, jornadas e viagens operacionais.',
+                'name' => 'Operations & Logistics',
+                'description' => 'Fleet management, routing, shifts, and operational logistics.',
                 'is_active' => true,
             ],
         );
 
-        $rh = Department::updateOrCreate(
-            ['slug' => 'rh'],
+        $hr = Department::updateOrCreate(
+            ['slug' => 'human-resources'],
             [
-                'name' => 'Recursos Humanos',
-                'description' => 'Gestão de pessoas, departamentos e admissões.',
+                'name' => 'Human Resources',
+                'description' => 'Talent management, department organization, and employee onboarding.',
                 'is_active' => true,
             ],
         );
 
-        // 3. Cadastrar Roles com Níveis Hierárquicos
+        // 3. Register Roles with Hierarchical Levels
         $adminRole = Role::updateOrCreate(
             ['slug' => 'admin'],
             [
@@ -107,9 +107,9 @@ class RolePermissionSeeder extends Seeder
         $managerRole = Role::updateOrCreate(
             ['slug' => 'manager'],
             [
-                'name' => 'Gerente de Departamento',
+                'name' => 'Department Manager',
                 'level' => 50,
-                'description' => 'Gestão de equipes e autorização operacional dentro do departamento.',
+                'description' => 'Team management and operational authorization within the department.',
             ],
         );
         $managerPermissionIds = collect($createdPermissions)
@@ -120,9 +120,9 @@ class RolePermissionSeeder extends Seeder
         $operatorRole = Role::updateOrCreate(
             ['slug' => 'operator'],
             [
-                'name' => 'Operador / Motorista',
+                'name' => 'Operator',
                 'level' => 20,
-                'description' => 'Acesso básico para execução de rotinas e jornadas no setor.',
+                'description' => 'Basic operational access to execute sector routines and tasks.',
             ],
         );
 
@@ -139,12 +139,12 @@ class RolePermissionSeeder extends Seeder
             ->pluck('id');
         $viewerRole->permissions()->sync($viewPermissionIds);
 
-        // Vincular roles a departamentos modelo
-        $financeiro->roles()->syncWithoutDetaching([$adminRole->id, $managerRole->id, $viewerRole->id]);
-        $operacoes->roles()->syncWithoutDetaching([$managerRole->id, $operatorRole->id, $viewerRole->id]);
-        $diretoria->roles()->syncWithoutDetaching([$adminRole->id, $managerRole->id]);
+        // Link roles to model departments
+        $finance->roles()->syncWithoutDetaching([$adminRole->id, $managerRole->id, $viewerRole->id]);
+        $operations->roles()->syncWithoutDetaching([$managerRole->id, $operatorRole->id, $viewerRole->id]);
+        $executive->roles()->syncWithoutDetaching([$adminRole->id, $managerRole->id]);
 
-        // 4. Cadastrar Usuários de Demonstração
+        // 4. Register Demo Users
         $superAdmin = User::updateOrCreate(
             ['email' => 'admin@example.com'],
             [
@@ -156,14 +156,14 @@ class RolePermissionSeeder extends Seeder
         );
         $superAdmin->roles()->sync([$adminRole->id]);
         $superAdmin->departments()->sync([
-            $diretoria->id => ['id' => (string) Str::uuid(), 'role_id' => $adminRole->id, 'is_primary' => true],
-            $financeiro->id => ['id' => (string) Str::uuid(), 'role_id' => $adminRole->id, 'is_primary' => false],
+            $executive->id => ['id' => (string) Str::uuid(), 'role_id' => $adminRole->id, 'is_primary' => true],
+            $finance->id => ['id' => (string) Str::uuid(), 'role_id' => $adminRole->id, 'is_primary' => false],
         ]);
 
         $managerUser = User::updateOrCreate(
             ['email' => 'manager@example.com'],
             [
-                'name' => 'Gerente Operações',
+                'name' => 'Operations Manager',
                 'password' => Hash::make('password'),
                 'is_super_admin' => false,
                 'email_verified_at' => now(),
@@ -171,7 +171,7 @@ class RolePermissionSeeder extends Seeder
         );
         $managerUser->roles()->sync([$managerRole->id]);
         $managerUser->departments()->sync([
-            $operacoes->id => ['id' => (string) Str::uuid(), 'role_id' => $managerRole->id, 'is_primary' => true],
+            $operations->id => ['id' => (string) Str::uuid(), 'role_id' => $managerRole->id, 'is_primary' => true],
         ]);
 
         $viewerUser = User::updateOrCreate(
@@ -185,7 +185,7 @@ class RolePermissionSeeder extends Seeder
         );
         $viewerUser->roles()->sync([$viewerRole->id]);
         $viewerUser->departments()->sync([
-            $financeiro->id => ['id' => (string) Str::uuid(), 'role_id' => $viewerRole->id, 'is_primary' => true],
+            $finance->id => ['id' => (string) Str::uuid(), 'role_id' => $viewerRole->id, 'is_primary' => true],
         ]);
     }
 }

@@ -20,8 +20,8 @@ enum RoleLevel: int
             self::ADMIN => __('Administrator (80)'),
             self::MANAGER => __('Department Manager (50)'),
             self::SUPERVISOR => __('Sector Supervisor (30)'),
-            self::OPERATOR => __('Operator / Driver (20)'),
-            self::VIEWER => __('Viewer / Guest (10)'),
+            self::OPERATOR => __('Operator (20)'),
+            self::VIEWER => __('Viewer (10)'),
         };
     }
 
