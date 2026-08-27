@@ -13,6 +13,9 @@ abstract class TestCase extends BaseTestCase
         parent::setUp();
 
         AccessCache::reset();
+
+        $this->app->setLocale('en');
+        $this->app['config']->set('app.locale', 'en');
     }
 
     protected function skipUnlessFortifyHas(string $feature, ?string $message = null): void

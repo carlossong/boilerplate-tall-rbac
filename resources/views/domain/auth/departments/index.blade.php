@@ -262,7 +262,7 @@
                                 <input type="checkbox" wire:model="form.role_ids" value="{{ $role->id }}" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
                                 <div class="flex items-center justify-between w-full">
                                     <span class="text-zinc-800 dark:text-zinc-200">{{ $role->name }}</span>
-                                    <span class="text-xs font-mono text-zinc-400">Lvl {{ $role->level }}</span>
+                                    <span class="text-xs font-mono text-zinc-400">{{ __('Lvl :level', ['level' => $role->level]) }}</span>
                                 </div>
                             </label>
                         @endforeach

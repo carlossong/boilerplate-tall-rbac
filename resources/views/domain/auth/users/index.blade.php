@@ -433,7 +433,7 @@
                                             <select wire:model="form.department_roles.{{ $dept->id }}" class="text-xs rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 py-1 px-2 w-full">
                                                 <option value="">{{ __('Default (Inherit global roles)') }}</option>
                                                 @foreach ($allRoles as $r)
-                                                    <option value="{{ $r->id }}">{{ $r->name }} (Lvl {{ $r->level }})</option>
+                                                    <option value="{{ $r->id }}">{{ $r->name }} ({{ __('Lvl :level', ['level' => $r->level]) }})</option>
                                                 @endforeach
                                             </select>
                                         </div>
