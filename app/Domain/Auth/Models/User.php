@@ -90,4 +90,14 @@ class User extends Authenticatable implements PasskeyUser
         return $this->belongsToMany(Role::class, 'role_user')
             ->withTimestamps();
     }
+
+    /**
+     * @return BelongsToMany<Department, $this>
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(Department::class, 'department_user')
+            ->withPivot(['id', 'role_id', 'is_primary'])
+            ->withTimestamps();
+    }
 }

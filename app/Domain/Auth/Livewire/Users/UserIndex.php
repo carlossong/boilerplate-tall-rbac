@@ -9,6 +9,7 @@ use App\Domain\Auth\Actions\DeleteUserAction;
 use App\Domain\Auth\Actions\RestoreUserAction;
 use App\Domain\Auth\Actions\UpdateUserAction;
 use App\Domain\Auth\Livewire\Forms\UserForm;
+use App\Domain\Auth\Models\Department;
 use App\Domain\Auth\Models\Role;
 use App\Domain\Auth\Models\User;
 use Illuminate\Contracts\View\View;
@@ -69,7 +70,7 @@ class UserIndex extends Component
 
     public function openEditModal(string $id): void
     {
-        $user = User::withTrashed()->with('roles')->findOrFail($id);
+        $user = User::withTrashed()->with(['roles', 'departments'])->findOrFail($id);
         $this->authorize('update', $user);
 
         $this->form->setUser($user);
@@ -158,7 +159,7 @@ class UserIndex extends Component
 
     public function render(): View
     {
-        $query = User::query()->with('roles');
+        $query = User::query()->with(['roles', 'departments']);
 
         if ($this->showDeleted) {
             $query->onlyTrashed();
@@ -176,7 +177,8 @@ class UserIndex extends Component
         }
 
         $users = $query->latest()->paginate(10);
-        $allRoles = Role::orderBy('name')->get();
+        $allRoles = Role::orderByLevel()->get();
+        $availableDepartments = Department::where('is_active', true)->orderBy('name')->get();
 
         $stats = [
             'total' => User::withTrashed()->count(),
@@ -188,6 +190,7 @@ class UserIndex extends Component
         return view('domain.auth.users.index', [
             'users' => $users,
             'allRoles' => $allRoles,
+            'availableDepartments' => $availableDepartments,
             'stats' => $stats,
         ]);
     }

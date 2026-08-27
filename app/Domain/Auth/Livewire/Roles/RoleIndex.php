@@ -9,6 +9,7 @@ use App\Domain\Auth\Actions\DeleteRoleAction;
 use App\Domain\Auth\Actions\RestoreRoleAction;
 use App\Domain\Auth\Actions\UpdateRoleAction;
 use App\Domain\Auth\Livewire\Forms\RoleForm;
+use App\Domain\Auth\Models\Department;
 use App\Domain\Auth\Models\Permission;
 use App\Domain\Auth\Models\Role;
 use DomainException;
@@ -63,7 +64,7 @@ class RoleIndex extends Component
 
     public function openEditModal(string $id): void
     {
-        $role = Role::withTrashed()->with('permissions')->findOrFail($id);
+        $role = Role::withTrashed()->with(['permissions', 'departments'])->findOrFail($id);
         $this->authorize('update', $role);
 
         $this->form->setRole($role);
@@ -153,7 +154,7 @@ class RoleIndex extends Component
             });
         }
 
-        $roles = $query->latest()->paginate(10);
+        $roles = $query->with('departments')->orderByLevel()->paginate(10);
         $allPermissions = Permission::orderBy('slug')->get()->groupBy(function ($perm) {
             $parts = explode('.', $perm->slug);
 
@@ -167,10 +168,14 @@ class RoleIndex extends Component
             'trashed' => Role::onlyTrashed()->count(),
         ];
 
+        $availableDepartments = Department::where('is_active', true)->orderBy('name')->get();
+
         return view('domain.auth.roles.index', [
             'roles' => $roles,
             'groupedPermissions' => $allPermissions,
             'stats' => $stats,
+            'availableDepartments' => $availableDepartments,
         ]);
+
     }
 }

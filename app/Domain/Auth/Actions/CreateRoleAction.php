@@ -16,11 +16,16 @@ final readonly class CreateRoleAction
             $role = Role::create([
                 'name' => $data->name,
                 'slug' => $data->slug,
+                'level' => $data->level,
                 'description' => $data->description,
             ]);
 
             if (! empty($data->permissionIds)) {
                 $role->permissions()->sync($data->permissionIds);
+            }
+
+            if (! empty($data->departmentIds)) {
+                $role->departments()->sync($data->departmentIds);
             }
 
             return $role;

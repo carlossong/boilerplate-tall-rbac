@@ -122,8 +122,10 @@
         <flux:card class="overflow-hidden p-0 border-zinc-200/80 dark:border-zinc-800 shadow-xs">
             <flux:table>
                 <flux:table.columns>
-                    <flux:table.column class="ps-6! py-3.5! w-1/3">{{ __('Role') }}</flux:table.column>
+                    <flux:table.column class="ps-6! py-3.5! w-1/4">{{ __('Role') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Slug') }}</flux:table.column>
+                    <flux:table.column class="py-3.5!">{{ __('Level') }}</flux:table.column>
+                    <flux:table.column class="py-3.5!">{{ __('Departments') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Permissions') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Assigned Users') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Status') }}</flux:table.column>
@@ -149,6 +151,28 @@
 
                             <flux:table.cell class="py-4!">
                                 <flux:badge size="sm" color="zinc" class="font-mono">{{ $role->slug }}</flux:badge>
+                            </flux:table.cell>
+
+                            <flux:table.cell class="py-4!">
+                                @if ($role->level >= 80)
+                                    <flux:badge size="sm" color="purple" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
+                                @elseif ($role->level >= 50)
+                                    <flux:badge size="sm" color="sky" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
+                                @elseif ($role->level >= 30)
+                                    <flux:badge size="sm" color="amber" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
+                                @else
+                                    <flux:badge size="sm" color="zinc" inset="top bottom">Lvl {{ $role->level }}</flux:badge>
+                                @endif
+                            </flux:table.cell>
+
+                            <flux:table.cell class="py-4!">
+                                <div class="flex flex-wrap gap-1 max-w-xs">
+                                    @forelse ($role->departments as $dept)
+                                        <flux:badge size="sm" color="zinc" inset="top bottom">{{ $dept->name }}</flux:badge>
+                                    @empty
+                                        <span class="text-xs text-zinc-400">{{ __('Global') }}</span>
+                                    @endforelse
+                                </div>
                             </flux:table.cell>
 
                             <flux:table.cell class="py-4!">
@@ -270,12 +294,33 @@
             </div>
 
             <div class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <flux:input wire:model="form.name" :label="__('Role Name')" :placeholder="__('e.g. Moderator')" required />
                     <flux:input wire:model="form.slug" :label="__('Slug')" :placeholder="__('e.g. moderator')" :disabled="$form->slug === 'admin'" required />
+                    <flux:input type="number" min="1" max="100" wire:model="form.level" :label="__('Level (1-100)')" :placeholder="10" required />
                 </div>
 
                 <flux:textarea wire:model="form.description" :label="__('Description')" :placeholder="__('Briefly describe what duties users with this role perform.')" rows="2" />
+
+                <!-- Associated Departments -->
+                @if ($availableDepartments->isNotEmpty())
+                    <div>
+                        <div class="flex items-center justify-between mb-2">
+                            <flux:label class="font-medium">{{ __('Associated Departments') }}</flux:label>
+                            <span class="text-xs text-zinc-500">
+                                {{ count($form->department_ids) }} {{ __('selected (empty = Global)') }}
+                            </span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg max-h-36 overflow-y-auto bg-zinc-50/30 dark:bg-zinc-900/30">
+                            @foreach ($availableDepartments as $dept)
+                                <label class="flex items-center gap-2 p-1.5 rounded hover:bg-zinc-100 dark:hover:bg-zinc-800 text-xs cursor-pointer">
+                                    <input type="checkbox" wire:model="form.department_ids" value="{{ $dept->id }}" class="rounded border-zinc-300 text-zinc-900" />
+                                    <span class="text-zinc-800 dark:text-zinc-200">{{ $dept->name }}</span>
+                                </label>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
 
                 <!-- Grouped Permissions -->
                 <div>

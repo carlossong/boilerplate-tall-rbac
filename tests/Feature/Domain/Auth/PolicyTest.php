@@ -73,7 +73,7 @@ class PolicyTest extends TestCase
     public function test_admin_role_cannot_be_deleted(): void
     {
         $user = User::factory()->create();
-        $role = Role::factory()->create();
+        $role = Role::factory()->create(['level' => 50]);
         $permission = Permission::factory()->create(['slug' => 'roles.delete']);
 
         $role->permissions()->attach($permission);
@@ -81,8 +81,8 @@ class PolicyTest extends TestCase
 
         Gate::define('roles.delete', fn ($u) => $u->hasPermissionTo('roles.delete'));
 
-        $adminRole = Role::factory()->create(['slug' => 'admin']);
-        $customRole = Role::factory()->create(['slug' => 'custom']);
+        $adminRole = Role::factory()->create(['slug' => 'admin', 'level' => 80]);
+        $customRole = Role::factory()->create(['slug' => 'custom', 'level' => 10]);
 
         $this->assertTrue(Gate::forUser($user)->allows('delete', $customRole));
         $this->assertFalse(Gate::forUser($user)->allows('delete', $adminRole));

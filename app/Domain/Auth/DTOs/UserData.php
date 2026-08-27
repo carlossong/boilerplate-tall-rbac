@@ -8,6 +8,7 @@ final readonly class UserData
 {
     /**
      * @param  array<string>  $roleIds
+     * @param  array<int|string, mixed>  $departmentAssignments
      */
     public function __construct(
         public string $name,
@@ -15,6 +16,7 @@ final readonly class UserData
         public ?string $password = null,
         public bool $isSuperAdmin = false,
         public array $roleIds = [],
+        public array $departmentAssignments = [],
     ) {}
 
     /**
@@ -28,6 +30,7 @@ final readonly class UserData
             password: isset($data['password']) && filled($data['password']) ? (string) $data['password'] : null,
             isSuperAdmin: (bool) ($data['is_super_admin'] ?? false),
             roleIds: (array) ($data['role_ids'] ?? []),
+            departmentAssignments: (array) ($data['departments'] ?? $data['department_assignments'] ?? []),
         );
     }
 }

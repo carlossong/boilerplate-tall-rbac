@@ -26,8 +26,37 @@ class RoleFactory extends Factory
 
         return [
             'name' => $name,
-            'slug' => Str::slug($name),
+            'slug' => Str::slug($name).'-'.fake()->unique()->randomNumber(3),
+            'level' => 10,
             'description' => fake()->sentence(),
         ];
+
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Administrator',
+            'slug' => 'admin',
+            'level' => 80,
+        ]);
+    }
+
+    public function manager(): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Manager',
+            'slug' => 'manager',
+            'level' => 50,
+        ]);
+    }
+
+    public function operator(): static
+    {
+        return $this->state(fn () => [
+            'name' => 'Operator',
+            'slug' => 'operator',
+            'level' => 20,
+        ]);
     }
 }

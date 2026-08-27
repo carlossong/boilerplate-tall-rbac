@@ -16,10 +16,12 @@ final readonly class UpdateRoleAction
             $role->update([
                 'name' => $data->name,
                 'slug' => $data->slug,
+                'level' => $data->level,
                 'description' => $data->description,
             ]);
 
             $role->permissions()->sync($data->permissionIds);
+            $role->departments()->sync($data->departmentIds);
 
             return $role;
         });

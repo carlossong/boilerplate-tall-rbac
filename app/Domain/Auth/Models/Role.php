@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Domain\Auth\Models;
 
 use Database\Factories\RoleFactory;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -19,6 +20,16 @@ class Role extends Model
     protected $guarded = [];
 
     /**
+     * @return array<string, string>
+     */
+    protected function casts(): array
+    {
+        return [
+            'level' => 'integer',
+        ];
+    }
+
+    /**
      * Create a new factory instance for the model.
      */
     protected static function newFactory(): RoleFactory
@@ -27,11 +38,30 @@ class Role extends Model
     }
 
     /**
+     * @param  Builder<Role>  $query
+     * @param  'asc'|'desc'  $direction
+     * @return Builder<Role>
+     */
+    public function scopeOrderByLevel(Builder $query, string $direction = 'desc'): Builder
+    {
+        return $query->orderBy('level', $direction);
+    }
+
+    /**
      * @return BelongsToMany<User, $this>
      */
     public function users(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'role_user')
+            ->withTimestamps();
+    }
+
+    /**
+     * @return BelongsToMany<Department, $this>
+     */
+    public function departments(): BelongsToMany
+    {
+        return $this->belongsToMany(Department::class, 'department_role')
             ->withTimestamps();
     }
 

@@ -26,6 +26,27 @@ final readonly class CreateUserAction
                 $user->roles()->sync($data->roleIds);
             }
 
+            if (! empty($data->departmentAssignments)) {
+                $syncData = [];
+                foreach ($data->departmentAssignments as $item) {
+                    if (is_string($item)) {
+                        $syncData[$item] = [
+                            'id' => (string) Str::uuid(),
+                            'role_id' => null,
+                            'is_primary' => empty($syncData),
+                        ];
+                    } elseif (is_array($item) && isset($item['department_id'])) {
+                        $syncData[$item['department_id']] = [
+                            'id' => (string) Str::uuid(),
+                            'role_id' => ! empty($item['role_id']) ? $item['role_id'] : null,
+                            'is_primary' => (bool) ($item['is_primary'] ?? false),
+                        ];
+                    }
+                }
+
+                $user->departments()->sync($syncData);
+            }
+
             return $user;
         });
     }

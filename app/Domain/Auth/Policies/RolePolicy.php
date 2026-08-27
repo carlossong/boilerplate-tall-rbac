@@ -38,7 +38,20 @@ class RolePolicy
      */
     public function update(User $user, Role $role): bool
     {
-        return $user->can('roles.update');
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->can('roles.update')) {
+            return false;
+        }
+
+        // Não pode editar role com nível superior ao seu próprio maior nível
+        if ($role->level > $user->highestRoleLevel()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -46,12 +59,25 @@ class RolePolicy
      */
     public function delete(User $user, Role $role): bool
     {
-        // Impede a exclusão da role essencial 'admin'
-        if ($role->slug === 'admin') {
+        // Impede a exclusão das roles estruturais essenciais
+        if (in_array($role->slug, ['admin', 'super-admin'], true)) {
             return false;
         }
 
-        return $user->can('roles.delete');
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->can('roles.delete')) {
+            return false;
+        }
+
+        // Não pode excluir role com nível superior ao seu próprio
+        if ($role->level > $user->highestRoleLevel()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -59,7 +85,15 @@ class RolePolicy
      */
     public function restore(User $user, Role $role): bool
     {
-        return $user->can('roles.delete');
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->can('roles.delete')) {
+            return false;
+        }
+
+        return $role->level <= $user->highestRoleLevel();
     }
 
     /**
@@ -67,10 +101,6 @@ class RolePolicy
      */
     public function forceDelete(User $user, Role $role): bool
     {
-        if ($role->slug === 'admin') {
-            return false;
-        }
-
-        return $user->can('roles.delete');
+        return $this->delete($user, $role);
     }
 }

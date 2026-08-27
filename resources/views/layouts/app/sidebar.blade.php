@@ -17,11 +17,16 @@
                     </flux:sidebar.item>
                 </flux:sidebar.group>
 
-                @if (auth()->user()?->can('users.view') || auth()->user()?->can('roles.view') || auth()->user()?->can('permissions.view'))
+                @if (auth()->user()?->can('users.view') || auth()->user()?->can('departments.view') || auth()->user()?->can('roles.view') || auth()->user()?->can('permissions.view'))
                     <flux:sidebar.group :heading="__('Administration')" class="grid">
                         @can('users.view')
                             <flux:sidebar.item icon="users" :href="route('admin.users.index')" :current="request()->routeIs('admin.users.*')" wire:navigate>
                                 {{ __('Users') }}
+                            </flux:sidebar.item>
+                        @endcan
+                        @can('departments.view')
+                            <flux:sidebar.item icon="building-office-2" :href="route('admin.departments.index')" :current="request()->routeIs('admin.departments.*')" wire:navigate>
+                                {{ __('Departments') }}
                             </flux:sidebar.item>
                         @endcan
                         @can('roles.view')
@@ -36,19 +41,10 @@
                         @endcan
                     </flux:sidebar.group>
                 @endif
+
             </flux:sidebar.nav>
 
             <flux:spacer />
-
-            <flux:sidebar.nav>
-                <flux:sidebar.item icon="folder-git-2" href="https://github.com/laravel/livewire-starter-kit" target="_blank">
-                    {{ __('Repository') }}
-                </flux:sidebar.item>
-
-                <flux:sidebar.item icon="book-open-text" href="https://laravel.com/docs/starter-kits#livewire" target="_blank">
-                    {{ __('Documentation') }}
-                </flux:sidebar.item>
-            </flux:sidebar.nav>
 
             <x-desktop-user-menu class="hidden lg:block" :name="auth()->user()->name" />
         </flux:sidebar>

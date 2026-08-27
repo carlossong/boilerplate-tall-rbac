@@ -126,8 +126,9 @@
         <flux:card class="overflow-hidden p-0 border-zinc-200/80 dark:border-zinc-800 shadow-xs">
             <flux:table>
                 <flux:table.columns>
-                    <flux:table.column class="ps-6! py-3.5! w-2/5">{{ __('User') }}</flux:table.column>
-                    <flux:table.column class="py-3.5!">{{ __('Roles') }}</flux:table.column>
+                    <flux:table.column class="ps-6! py-3.5! w-1/3">{{ __('User') }}</flux:table.column>
+                    <flux:table.column class="py-3.5!">{{ __('Global Roles') }}</flux:table.column>
+                    <flux:table.column class="py-3.5!">{{ __('Departments & Sectors') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Status') }}</flux:table.column>
                     <flux:table.column class="py-3.5!">{{ __('Created') }}</flux:table.column>
                     <flux:table.column align="center" class="pe-6! py-3.5! w-28 text-center">{{ __('Actions') }}</flux:table.column>
@@ -145,6 +146,7 @@
                                             @if ($user->is_super_admin)
                                                 <flux:badge size="sm" color="amber" inset="top bottom" icon="shield-check">{{ __('Super Admin') }}</flux:badge>
                                             @endif
+                                            <flux:badge size="sm" color="zinc" class="font-mono text-xs">Lvl {{ $user->highestRoleLevel() }}</flux:badge>
                                         </div>
                                         <span class="text-xs text-zinc-500 dark:text-zinc-400 truncate">{{ $user->email }}</span>
                                     </div>
@@ -154,9 +156,30 @@
                             <flux:table.cell class="py-4!">
                                 <div class="flex flex-wrap gap-1.5 max-w-xs">
                                     @forelse ($user->roles as $role)
-                                        <flux:badge size="sm" :color="$role->slug === 'admin' ? 'purple' : 'zinc'">{{ $role->name }}</flux:badge>
+                                        <flux:badge size="sm" :color="$role->slug === 'admin' ? 'purple' : 'zinc'">
+                                            {{ $role->name }} <span class="text-xs opacity-70">({{ $role->level }})</span>
+                                        </flux:badge>
                                     @empty
-                                        <span class="text-xs italic text-zinc-400 dark:text-zinc-500">{{ __('No roles assigned') }}</span>
+                                        <span class="text-xs italic text-zinc-400 dark:text-zinc-500">{{ __('No global roles') }}</span>
+                                    @endforelse
+                                </div>
+                            </flux:table.cell>
+
+                            <flux:table.cell class="py-4!">
+                                <div class="flex flex-wrap gap-1.5 max-w-xs">
+                                    @forelse ($user->departments as $dept)
+                                        <flux:badge size="sm" :color="$dept->pivot->is_primary ? 'sky' : 'zinc'" inset="top bottom">
+                                            <flux:icon icon="building-office-2" class="size-3 mr-1 inline" />
+                                            {{ $dept->name }}
+                                            @if ($dept->pivot->role_id)
+                                                @php $dRole = $allRoles->firstWhere('id', $dept->pivot->role_id); @endphp
+                                                @if ($dRole)
+                                                    <span class="text-xs font-semibold opacity-80">({{ $dRole->name }})</span>
+                                                @endif
+                                            @endif
+                                        </flux:badge>
+                                    @empty
+                                        <span class="text-xs italic text-zinc-400 dark:text-zinc-500">{{ __('None') }}</span>
                                     @endforelse
                                 </div>
                             </flux:table.cell>
@@ -313,6 +336,54 @@
                     </div>
                     <flux:error name="form.role_ids" />
                 </div>
+
+                <!-- Department & Sector Assignment -->
+                @if ($availableDepartments->isNotEmpty())
+                    <div class="pt-2 border-t border-zinc-200/80 dark:border-zinc-800">
+                        <div class="flex items-center justify-between mb-2">
+                            <flux:label class="font-medium">{{ __('Departments & Sector Roles') }}</flux:label>
+                            <span class="text-xs text-zinc-500">
+                                {{ count($form->department_ids) }} {{ __('assigned') }}
+                            </span>
+                        </div>
+                        <flux:description class="mb-3 text-xs">
+                            {{ __('Select departments this user belongs to, assign sector-specific roles, and set the primary unit.') }}
+                        </flux:description>
+
+                        <div class="space-y-3 max-h-60 overflow-y-auto p-3 border border-zinc-200 dark:border-zinc-800 rounded-lg bg-zinc-50/30 dark:bg-zinc-900/30">
+                            @foreach ($availableDepartments as $dept)
+                                @php $isDeptSelected = in_array($dept->id, $form->department_ids, true); @endphp
+                                <div class="p-2.5 rounded-lg border {{ $isDeptSelected ? 'border-zinc-300 dark:border-zinc-700 bg-white dark:bg-zinc-800/80 shadow-2xs' : 'border-zinc-200/60 dark:border-zinc-800/40 bg-zinc-50/50 dark:bg-zinc-900/40' }}">
+                                    <div class="flex items-center justify-between">
+                                        <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                                            <input type="checkbox" wire:model.live="form.department_ids" value="{{ $dept->id }}" class="rounded border-zinc-300 text-zinc-900 focus:ring-zinc-900" />
+                                            <span>{{ $dept->name }}</span>
+                                        </label>
+
+                                        @if ($isDeptSelected)
+                                            <label class="flex items-center gap-1.5 text-xs text-zinc-500 cursor-pointer">
+                                                <input type="radio" wire:model="form.primary_department_id" value="{{ $dept->id }}" name="primary_dept" class="text-sky-600 focus:ring-sky-500" />
+                                                <span>{{ __('Primary') }}</span>
+                                            </label>
+                                        @endif
+                                    </div>
+
+                                    @if ($isDeptSelected)
+                                        <div class="mt-2 pt-2 border-t border-zinc-100 dark:border-zinc-700/60 flex items-center gap-2">
+                                            <span class="text-xs text-zinc-500 shrink-0">{{ __('Sector Role:') }}</span>
+                                            <select wire:model="form.department_roles.{{ $dept->id }}" class="text-xs rounded-md border-zinc-300 dark:border-zinc-700 bg-zinc-50 dark:bg-zinc-900 text-zinc-900 dark:text-zinc-100 py-1 px-2 w-full">
+                                                <option value="">{{ __('Default (Inherit global roles)') }}</option>
+                                                @foreach ($allRoles as $r)
+                                                    <option value="{{ $r->id }}">{{ $r->name }} (Lvl {{ $r->level }})</option>
+                                                @endforeach
+                                            </select>
+                                        </div>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
             </div>
 
             <div class="flex justify-end gap-2.5 pt-2 border-t border-zinc-200 dark:border-zinc-800">

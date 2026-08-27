@@ -4,19 +4,17 @@ declare(strict_types=1);
 
 namespace App\Domain\Auth\DTOs;
 
-final readonly class RoleData
+final readonly class DepartmentData
 {
     /**
-     * @param  array<string>  $permissionIds
-     * @param  array<string>  $departmentIds
+     * @param  array<string>  $roleIds
      */
     public function __construct(
         public string $name,
         public string $slug,
-        public int $level = 10,
         public ?string $description = null,
-        public array $permissionIds = [],
-        public array $departmentIds = [],
+        public bool $isActive = true,
+        public array $roleIds = [],
     ) {}
 
     /**
@@ -27,10 +25,9 @@ final readonly class RoleData
         return new self(
             name: (string) ($data['name'] ?? ''),
             slug: (string) ($data['slug'] ?? ''),
-            level: (int) ($data['level'] ?? 10),
             description: isset($data['description']) && filled($data['description']) ? (string) $data['description'] : null,
-            permissionIds: (array) ($data['permission_ids'] ?? []),
-            departmentIds: (array) ($data['department_ids'] ?? []),
+            isActive: (bool) ($data['is_active'] ?? true),
+            roleIds: (array) ($data['role_ids'] ?? []),
         );
     }
 }

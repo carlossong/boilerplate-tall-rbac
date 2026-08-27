@@ -2,8 +2,10 @@
 
 namespace App\Providers;
 
+use App\Domain\Auth\Models\Department;
 use App\Domain\Auth\Models\Permission;
 use App\Domain\Auth\Models\Role;
+use App\Domain\Auth\Policies\DepartmentPolicy;
 use App\Domain\Auth\Policies\PermissionPolicy;
 use App\Domain\Auth\Policies\RolePolicy;
 use App\Domain\Auth\Policies\UserPolicy;
@@ -45,6 +47,7 @@ class AppServiceProvider extends ServiceProvider
         Gate::policy(\App\Domain\Auth\Models\User::class, UserPolicy::class);
         Gate::policy(Role::class, RolePolicy::class);
         Gate::policy(Permission::class, PermissionPolicy::class);
+        Gate::policy(Department::class, DepartmentPolicy::class);
 
         Gate::before(function ($user, string $ability) {
             if ($user instanceof \App\Domain\Auth\Models\User && $user->isSuperAdmin()) {

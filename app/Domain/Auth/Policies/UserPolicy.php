@@ -37,7 +37,25 @@ class UserPolicy
      */
     public function update(User $user, User $model): bool
     {
-        return $user->can('users.update');
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->can('users.update')) {
+            return false;
+        }
+
+        // Não pode atualizar um Super Admin se o autor não for Super Admin
+        if ($model->isSuperAdmin()) {
+            return false;
+        }
+
+        // Se estiver editando outro usuário, exige nível hierárquico estritamente superior
+        if ($user->id !== $model->id && $user->highestRoleLevel() <= $model->highestRoleLevel()) {
+            return false;
+        }
+
+        return true;
     }
 
     /**
@@ -50,7 +68,21 @@ class UserPolicy
             return false;
         }
 
-        return $user->can('users.delete');
+        // Super Admin não pode ser excluído por usuário comum
+        if ($model->isSuperAdmin()) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->can('users.delete')) {
+            return false;
+        }
+
+        // Exige nível hierárquico estritamente superior para excluir outro usuário
+        return $user->highestRoleLevel() > $model->highestRoleLevel();
     }
 
     /**
@@ -58,7 +90,19 @@ class UserPolicy
      */
     public function restore(User $user, User $model): bool
     {
-        return $user->can('users.delete');
+        if ($model->isSuperAdmin() && ! $user->isSuperAdmin()) {
+            return false;
+        }
+
+        if ($user->isSuperAdmin()) {
+            return true;
+        }
+
+        if (! $user->can('users.delete')) {
+            return false;
+        }
+
+        return $user->highestRoleLevel() > $model->highestRoleLevel();
     }
 
     /**
@@ -66,10 +110,6 @@ class UserPolicy
      */
     public function forceDelete(User $user, User $model): bool
     {
-        if ($user->id === $model->id) {
-            return false;
-        }
-
-        return $user->can('users.delete');
+        return $this->delete($user, $model);
     }
 }
