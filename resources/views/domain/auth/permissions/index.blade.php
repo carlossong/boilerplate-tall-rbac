@@ -183,32 +183,42 @@
 
                             <flux:table.cell align="center" class="pe-6! py-4! text-center">
                                 <div class="flex justify-center">
-                                    <flux:dropdown align="end">
-                                        <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" inset="top bottom" />
+                                    @php
+                                        $canRestore = $permission->trashed() && auth()->user()?->can('restore', $permission);
+                                        $canUpdate = ! $permission->trashed() && auth()->user()?->can('update', $permission);
+                                        $canDelete = ! $permission->trashed() && auth()->user()?->can('delete', $permission);
+                                    @endphp
 
-                                        <flux:menu class="min-w-36">
-                                            @if ($permission->trashed())
-                                                @can('restore', $permission)
+                                    @if ($canRestore || $canUpdate || $canDelete)
+                                        <flux:dropdown align="end">
+                                            <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" inset="top bottom" />
+
+                                            <flux:menu class="min-w-36">
+                                                @if ($canRestore)
                                                     <flux:menu.item icon="arrow-path" wire:click="restorePermission('{{ $permission->id }}')">
                                                         {{ __('Restore Permission') }}
                                                     </flux:menu.item>
-                                                @endcan
-                                            @else
-                                                @can('update', $permission)
+                                                @endif
+
+                                                @if ($canUpdate)
                                                     <flux:menu.item icon="pencil-square" wire:click="openEditModal('{{ $permission->id }}')">
                                                         {{ __('Edit Permission') }}
                                                     </flux:menu.item>
-                                                @endcan
+                                                @endif
 
-                                                @can('delete', $permission)
-                                                    <flux:menu.separator />
+                                                @if ($canDelete)
+                                                    @if ($canUpdate)
+                                                        <flux:menu.separator />
+                                                    @endif
                                                     <flux:menu.item variant="danger" icon="trash" wire:click="confirmDelete('{{ $permission->id }}')">
                                                         {{ __('Delete Permission') }}
                                                     </flux:menu.item>
-                                                @endcan
-                                            @endif
-                                        </flux:menu>
-                                    </flux:dropdown>
+                                                @endif
+                                            </flux:menu>
+                                        </flux:dropdown>
+                                    @else
+                                        <span class="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+                                    @endif
                                 </div>
                             </flux:table.cell>
                         </flux:table.row>

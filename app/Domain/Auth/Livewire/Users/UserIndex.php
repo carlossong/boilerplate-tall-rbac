@@ -81,14 +81,27 @@ class UserIndex extends Component
     {
         $this->form->validate();
 
+        $currentUser = auth()->user();
+        $isCurrentSuperAdmin = $currentUser instanceof User && $currentUser->is_super_admin;
+
         if ($this->form->id !== null) {
             $user = User::withTrashed()->findOrFail($this->form->id);
             $this->authorize('update', $user);
+
+            // Apenas super administradores podem alterar o status de super admin
+            if (! $isCurrentSuperAdmin) {
+                $this->form->is_super_admin = $user->is_super_admin;
+            }
 
             $updateAction($user, $this->form->toDTO());
             session()->flash('status', __('User updated successfully.'));
         } else {
             $this->authorize('create', User::class);
+
+            // Apenas super administradores podem criar novos super admins
+            if (! $isCurrentSuperAdmin) {
+                $this->form->is_super_admin = false;
+            }
 
             $createAction($this->form->toDTO());
             session()->flash('status', __('User created successfully.'));

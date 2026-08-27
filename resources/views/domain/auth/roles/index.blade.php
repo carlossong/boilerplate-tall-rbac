@@ -185,34 +185,42 @@
 
                             <flux:table.cell align="center" class="pe-6! py-4! text-center">
                                 <div class="flex justify-center">
-                                    <flux:dropdown align="end">
-                                        <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" inset="top bottom" />
+                                    @php
+                                        $canRestore = $role->trashed() && auth()->user()?->can('restore', $role);
+                                        $canUpdate = ! $role->trashed() && auth()->user()?->can('update', $role);
+                                        $canDelete = ! $role->trashed() && $role->slug !== 'admin' && auth()->user()?->can('delete', $role);
+                                    @endphp
 
-                                        <flux:menu class="min-w-36">
-                                            @if ($role->trashed())
-                                                @can('restore', $role)
+                                    @if ($canRestore || $canUpdate || $canDelete)
+                                        <flux:dropdown align="end">
+                                            <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" inset="top bottom" />
+
+                                            <flux:menu class="min-w-36">
+                                                @if ($canRestore)
                                                     <flux:menu.item icon="arrow-path" wire:click="restoreRole('{{ $role->id }}')">
                                                         {{ __('Restore Role') }}
                                                     </flux:menu.item>
-                                                @endcan
-                                            @else
-                                                @can('update', $role)
+                                                @endif
+
+                                                @if ($canUpdate)
                                                     <flux:menu.item icon="pencil-square" wire:click="openEditModal('{{ $role->id }}')">
                                                         {{ __('Edit Role') }}
                                                     </flux:menu.item>
-                                                @endcan
-
-                                                @if ($role->slug !== 'admin')
-                                                    @can('delete', $role)
-                                                        <flux:menu.separator />
-                                                        <flux:menu.item variant="danger" icon="trash" wire:click="confirmDelete('{{ $role->id }}')">
-                                                            {{ __('Delete Role') }}
-                                                        </flux:menu.item>
-                                                    @endcan
                                                 @endif
-                                            @endif
-                                        </flux:menu>
-                                    </flux:dropdown>
+
+                                                @if ($canDelete)
+                                                    @if ($canUpdate)
+                                                        <flux:menu.separator />
+                                                    @endif
+                                                    <flux:menu.item variant="danger" icon="trash" wire:click="confirmDelete('{{ $role->id }}')">
+                                                        {{ __('Delete Role') }}
+                                                    </flux:menu.item>
+                                                @endif
+                                            </flux:menu>
+                                        </flux:dropdown>
+                                    @else
+                                        <span class="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+                                    @endif
                                 </div>
                             </flux:table.cell>
                         </flux:table.row>
@@ -264,7 +272,7 @@
             <div class="space-y-4">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <flux:input wire:model="form.name" :label="__('Role Name')" :placeholder="__('e.g. Moderator')" required />
-                    <flux:input wire:model="form.slug" :label="__('Slug')" :placeholder="__('e.g. moderator')" required />
+                    <flux:input wire:model="form.slug" :label="__('Slug')" :placeholder="__('e.g. moderator')" :disabled="$form->slug === 'admin'" required />
                 </div>
 
                 <flux:textarea wire:model="form.description" :label="__('Description')" :placeholder="__('Briefly describe what duties users with this role perform.')" rows="2" />

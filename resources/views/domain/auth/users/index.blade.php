@@ -181,32 +181,42 @@
 
                             <flux:table.cell align="center" class="pe-6! py-4! text-center">
                                 <div class="flex justify-center">
-                                    <flux:dropdown align="end">
-                                        <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" inset="top bottom" />
+                                    @php
+                                        $canRestore = $user->trashed() && auth()->user()?->can('restore', $user);
+                                        $canUpdate = ! $user->trashed() && auth()->user()?->can('update', $user);
+                                        $canDelete = ! $user->trashed() && auth()->user()?->can('delete', $user);
+                                    @endphp
 
-                                    <flux:menu class="min-w-36">
-                                        @if ($user->trashed())
-                                            @can('restore', $user)
-                                                <flux:menu.item icon="arrow-path" wire:click="restoreUser('{{ $user->id }}')">
-                                                    {{ __('Restore User') }}
-                                                </flux:menu.item>
-                                            @endcan
-                                        @else
-                                            @can('update', $user)
-                                                <flux:menu.item icon="pencil-square" wire:click="openEditModal('{{ $user->id }}')">
-                                                    {{ __('Edit Profile') }}
-                                                </flux:menu.item>
-                                            @endcan
+                                    @if ($canRestore || $canUpdate || $canDelete)
+                                        <flux:dropdown align="end">
+                                            <flux:button size="sm" variant="ghost" icon="ellipsis-horizontal" inset="top bottom" />
 
-                                            @can('delete', $user)
-                                                <flux:menu.separator />
-                                                <flux:menu.item variant="danger" icon="trash" wire:click="confirmDelete('{{ $user->id }}')">
-                                                    {{ __('Delete Account') }}
-                                                </flux:menu.item>
-                                            @endcan
-                                        @endif
-                                    </flux:menu>
-                                </flux:dropdown>
+                                            <flux:menu class="min-w-36">
+                                                @if ($canRestore)
+                                                    <flux:menu.item icon="arrow-path" wire:click="restoreUser('{{ $user->id }}')">
+                                                        {{ __('Restore User') }}
+                                                    </flux:menu.item>
+                                                @endif
+
+                                                @if ($canUpdate)
+                                                    <flux:menu.item icon="pencil-square" wire:click="openEditModal('{{ $user->id }}')">
+                                                        {{ __('Edit Profile') }}
+                                                    </flux:menu.item>
+                                                @endif
+
+                                                @if ($canDelete)
+                                                    @if ($canUpdate)
+                                                        <flux:menu.separator />
+                                                    @endif
+                                                    <flux:menu.item variant="danger" icon="trash" wire:click="confirmDelete('{{ $user->id }}')">
+                                                        {{ __('Delete Account') }}
+                                                    </flux:menu.item>
+                                                @endif
+                                            </flux:menu>
+                                        </flux:dropdown>
+                                    @else
+                                        <span class="text-xs text-zinc-400 dark:text-zinc-500">—</span>
+                                    @endif
                                 </div>
                             </flux:table.cell>
                         </flux:table.row>
@@ -272,13 +282,15 @@
                 />
 
                 <!-- Super Admin Privileges Callout -->
-                <div class="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 dark:border-amber-900/50 dark:bg-amber-950/20">
-                    <flux:checkbox
-                        wire:model="form.is_super_admin"
-                        :label="__('Super Administrator Privileges')"
-                        :description="__('Grants full bypass of all gate policies across the entire system. Use with discretion.')"
-                    />
-                </div>
+                @if (auth()->user()?->is_super_admin)
+                    <div class="rounded-lg border border-amber-200 bg-amber-50/50 p-3.5 dark:border-amber-900/50 dark:bg-amber-950/20">
+                        <flux:checkbox
+                            wire:model="form.is_super_admin"
+                            :label="__('Super Administrator Privileges')"
+                            :description="__('Grants full bypass of all gate policies across the entire system. Use with discretion.')"
+                        />
+                    </div>
+                @endif
 
                 <!-- Roles Selection -->
                 <div>
