@@ -158,7 +158,7 @@ trait HasPermissions
                 }
             }
 
-            $highest = (int) ($levels->max() ?? 0);
+            $highest = (int) $levels->max();
             $this->cachedHighestRoleLevel = $highest;
 
             return $highest;
@@ -178,8 +178,7 @@ trait HasPermissions
             }
         }
 
-        return (int) ($levels->max() ?? 0);
-
+        return (int) $levels->max();
     }
 
     /**
